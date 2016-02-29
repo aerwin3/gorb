@@ -1,6 +1,6 @@
 // Modified from Example 1.3: triangles.frag
 // OpenGL Programming Guide (Eighth Edition)
-#version 430 core
+#version 330 core
 
 out vec4 fColor;
 
