@@ -11,12 +11,17 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
+// Info representing a shader.
 type Info struct {
-	Type     uint32
+	// Type of shader: gl.VERTEX_SHADER, gl.FRAGMENT_SHADER, ...
+	Type uint32
+	// Filename of shader source file.
 	Filename string
-	shader   uint32
+	// shader ID.
+	shader uint32
 }
 
+// Compile the shader using the info provided.
 func (i *Info) Compile(program uint32) error {
 	i.shader = gl.CreateShader(i.Type)
 	source, err := readShader(i.Filename)

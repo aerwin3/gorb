@@ -4,18 +4,24 @@ package shader
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 )
 
-func init() {
-	// This is needed to arrange that main() runs on main thread.
-	// See documentation for functions that are only allowed to be called from the main thread.
-	runtime.LockOSThread()
+// Load the shaders, returning the ID of the resulting program.  Any problems
+// compiling or linking will result in an error.
+func Load(shaders *[]Info) (uint32, error) {
+	return load(shaders, false)
 }
 
-func Load(shaders *[]Info) (uint32, error) {
+// LoadSeparable is the same as Load with the exception that before the link stage
+// GL_PROGRAM_SEPARABLE is set to GL_TRUE.
+func LoadSeparable(shaders *[]Info) (uint32, error) {
+	return load(shaders, true)
+}
+
+// load the shaders
+func load(shaders *[]Info, separable bool) (uint32, error) {
 	program := gl.CreateProgram()
 
 	for _, s := range *shaders {
@@ -26,11 +32,9 @@ func Load(shaders *[]Info) (uint32, error) {
 		}
 	}
 
-	//#ifdef GL_VERSION_4_1
-	//if ( GLEW_VERSION_4_1 ) {
-	//    // glProgramParameteri( program, GL_PROGRAM_SEPARABLE, GL_TRUE );
-	//}
-	//#endif /* GL_VERSION_4_1 */
+	if separable {
+		gl.ProgramParameteri(program, gl.PROGRAM_SEPARABLE, gl.TRUE)
+	}
 
 	gl.LinkProgram(program)
 	cleanup(shaders)
@@ -43,6 +47,7 @@ func Load(shaders *[]Info) (uint32, error) {
 	return program, nil
 }
 
+// cleanup all shaders by calling Delete on any non-zero shader in the slice.
 func cleanup(shaders *[]Info) {
 	for _, s := range *shaders {
 		if s.shader != 0 {

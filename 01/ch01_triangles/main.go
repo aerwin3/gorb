@@ -3,7 +3,7 @@
 package main
 
 import (
-	"fmt"
+	"go/build"
 	"log"
 	"os"
 	"runtime"
@@ -35,9 +35,7 @@ var (
 const NumVertices = int32(6)
 
 func init() {
-	log.Println("init")
-	// This is needed to arrange that main() runs on main thread.
-	// See documentation for functions that are only allowed to be called from the main thread.
+	// GLFW event handling must run on the main OS thread
 	runtime.LockOSThread()
 }
 
@@ -62,11 +60,6 @@ func main() {
 	if err := gl.Init(); err != nil {
 		log.Fatalln("unable to initialize Glow ... exiting:", err)
 	}
-
-	fmt.Println("OpenGL vendor", gl.GoStr(gl.GetString(gl.VENDOR)))
-	fmt.Println("OpenGL renderer", gl.GoStr(gl.GetString(gl.RENDERER)))
-	fmt.Println("OpenGL version", gl.GoStr(gl.GetString(gl.VERSION)))
-	fmt.Println("GLSL version", gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION)))
 
 	initGL()
 
@@ -120,4 +113,28 @@ func display() {
 	gl.DrawArrays(gl.TRIANGLES, 0, NumVertices)
 
 	gl.Flush()
+}
+
+// Set the working directory to the root of Go package, so that its assets can be accessed.
+func init() {
+
+	dir, err := importPathToDir("github.com/hurricanerix/gorb/01/ch01_triangles")
+	if err != nil {
+		log.Fatalln("Unable to find Go package in your GOPATH, it's needed to load assets:", err)
+	}
+	err = os.Chdir(dir)
+	if err != nil {
+		log.Panicln("os.Chdir:", err)
+	}
+}
+
+// importPathToDir resolves the absolute path from importPath.
+// There doesn't need to be a valid Go package inside that import path,
+// but the directory must exist.
+func importPathToDir(importPath string) (string, error) {
+	p, err := build.Import(importPath, "", build.FindOnly)
+	if err != nil {
+		return "", err
+	}
+	return p.Dir, nil
 }
