@@ -7,5 +7,5 @@ Working through examples in the [OpenGL Red Book](http://www.amazon.com/OpenGL-P
 $ go get github.com/hurricanerix/gorb/...
 $ cd $GOPATH/src/github.com/hurricanerix/gorb
 
-$ go run 01/ch01_triangles/main.go
+$ go run 01/ch01-1_triangles/main.go
 ```
