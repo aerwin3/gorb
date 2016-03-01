@@ -204,7 +204,7 @@ func display() {
 // Set the working directory to the root of Go package, so that its assets can be accessed.
 func init() {
 
-	dir, err := importPathToDir("github.com/hurricanerix/gorb/03/ch03-5_drawing")
+	dir, err := importPathToDir("github.com/hurricanerix/gorb/03/ch03-5_drawcommands")
 	if err != nil {
 		log.Fatalln("Unable to find Go package in your GOPATH, it's needed to load assets:", err)
 	}
