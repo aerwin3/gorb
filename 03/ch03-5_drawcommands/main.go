@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"unsafe"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
@@ -110,7 +111,7 @@ func initGL() {
 		-1.0, -1.0, 0.0, 1.0,
 		1.0, -1.0, 0.0, 1.0,
 		-1.0, 1.0, 0.0, 1.0,
-		//		-1.0, -1.0, 0.0, 1.0,
+		-1.0, -1.0, 0.0, 1.0,
 	}
 
 	// Color for each vertex
@@ -118,50 +119,44 @@ func initGL() {
 		1.0, 1.0, 1.0, 1.0,
 		1.0, 1.0, 0.0, 1.0,
 		1.0, 0.0, 1.0, 1.0,
-		//			0.0, 1.0, 1.0, 1.0,
+		0.0, 1.0, 1.0, 1.0,
 	}
 
 	// Indices for the triangle strips
-	vertexIndices := []int{
+	vertexIndices := []uint16{
 		0, 1, 2,
 	}
 
+	// Set up the element array buffer
+	sizeVertexIndices := len(vertexIndices) * int(unsafe.Sizeof(vertexIndices[0]))
+
+	gl.GenBuffers(1, &Buffers[ElementBuffer])
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, Buffers[ElementBuffer])
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, sizeVertexIndices, gl.Ptr(vertexIndices), gl.STATIC_DRAW)
+
 	// Set up the vertex attributes
-	gl.GenVertexArrays(NumVAOs, &VAOs[0])
+	sizeVertexPositions := len(vertexPositions) * int(unsafe.Sizeof(vertexPositions[0]))
+	sizeVertexColors := len(vertexColors) * int(unsafe.Sizeof(vertexColors[0]))
+
+	gl.GenVertexArrays(1, &VAOs[Triangles])
 	gl.BindVertexArray(VAOs[Triangles])
 
-	gl.GenBuffers(NumBuffers, &Buffers[0])
-	// Set up the element array buffer
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, Buffers[ElementBuffer])
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(vertexIndices)*2, gl.Ptr(vertexIndices), gl.STATIC_DRAW)
-
+	gl.GenBuffers(1, &Buffers[ArrayBuffer])
 	gl.BindBuffer(gl.ARRAY_BUFFER, Buffers[ArrayBuffer])
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertexPositions)*4+len(vertexColors)*4, nil, gl.STATIC_DRAW)
-	//gl.BufferData(gl.ARRAY_BUFFER, len(vertexPositions)*4, gl.Ptr(vertexPositions), gl.STATIC_DRAW)
-	gl.BufferSubData(gl.ARRAY_BUFFER, 0, len(vertexPositions)*4, gl.Ptr(vertexPositions))
-	gl.BufferSubData(gl.ARRAY_BUFFER, len(vertexPositions)*4, len(vertexColors)*4, gl.Ptr(vertexColors))
+	gl.BufferData(gl.ARRAY_BUFFER, sizeVertexPositions+sizeVertexColors, nil, gl.STATIC_DRAW)
+	gl.BufferSubData(gl.ARRAY_BUFFER, 0, sizeVertexPositions, gl.Ptr(vertexPositions))
+	gl.BufferSubData(gl.ARRAY_BUFFER, sizeVertexPositions, sizeVertexColors, gl.Ptr(vertexColors))
 
-	//func VertexAttribPointer(index uint32, size int32, xtype uint32, normalized bool, stride int32, pointer unsafe.Pointer) {
-	gl.VertexAttribPointer(position, 4, gl.FLOAT, false, 0, gl.PtrOffset(0))
-	//gl.VertexAttribPointer(position, 4, gl.FLOAT, false, 0, nil)
-	gl.VertexAttribPointer(color, 4, gl.FLOAT, false, 0, gl.PtrOffset(4))
-
-	gl.EnableVertexAttribArray(position)
-	gl.EnableVertexAttribArray(color)
+	gl.VertexAttribPointer(0, 4, gl.FLOAT, false, 0, nil)
+	gl.VertexAttribPointer(1, 4, gl.FLOAT, false, 0, gl.PtrOffset(sizeVertexPositions))
+	gl.EnableVertexAttribArray(0)
+	gl.EnableVertexAttribArray(1)
 
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
-
-	gl.BindFragDataLocation(RenderProg, 0, gl.Str("color\x00"))
 }
 
 func display() {
-	/*
-		//t := float32(GetTickCount() & 0x1FFF) / float(0x1FFF);
-		//static float q = 0.0f;
-		//static const vmath::vec3 X(1.0f, 0.0f, 0.0f);
-		//static const vmath::vec3 Y(0.0f, 1.0f, 0.0f);
-		//static const vmath::vec3 Z(0.0f, 0.0f, 1.0f);
-	*/
+	var modelMatrix mgl32.Mat4
 
 	// Setup
 	gl.Enable(gl.CULL_FACE)
@@ -180,28 +175,25 @@ func display() {
 	gl.BindVertexArray(VAOs[Triangles])
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, Buffers[ElementBuffer])
 
-	var modelMatrix mgl32.Mat4
 	// Draw Arrays...
 	modelMatrix = mgl32.Translate3D(-3, 0, -5)
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 4, false, &modelMatrix[0])
+	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
 	gl.DrawArrays(gl.TRIANGLES, 0, 3)
 
-	/*
-		// DrawElements
-		modelMatrix = mgl32.Translate3D(-1, 0, -5)
-		gl.UniformMatrix4fv(renderModelMatrixLoc, 4, false, &modelMatrix[0])
-		gl.DrawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil)
+	// DrawElements
+	modelMatrix = mgl32.Translate3D(-1, 0, -5)
+	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
+	gl.DrawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil)
 
-		// DrawElementsBaseVertex
-		modelMatrix = mgl32.Translate3D(1, 0, -5)
-		gl.UniformMatrix4fv(renderModelMatrixLoc, 4, false, &modelMatrix[0])
-		gl.DrawElementsBaseVertex(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil, 1)
+	// DrawElementsBaseVertex
+	modelMatrix = mgl32.Translate3D(1, 0, -5)
+	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
+	gl.DrawElementsBaseVertex(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil, 1)
 
-		// DrawArraysInstanced
-		modelMatrix = mgl32.Translate3D(3, 0, -5)
-		gl.UniformMatrix4fv(renderModelMatrixLoc, 4, false, &modelMatrix[0])
-		gl.DrawArraysInstanced(gl.TRIANGLES, 0, 3, 1)
-	*/
+	// DrawArraysInstanced
+	modelMatrix = mgl32.Translate3D(3, 0, -5)
+	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
+	gl.DrawArraysInstanced(gl.TRIANGLES, 0, 3, 1)
 
 	gl.Flush()
 }
