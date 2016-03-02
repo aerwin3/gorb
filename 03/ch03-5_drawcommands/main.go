@@ -165,6 +165,7 @@ func display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	// Activate simple shading program
+	// TODO: figure out why enabling this does not work
 	//gl.UseProgram(RenderProg)
 
 	// Set up the model and projection matrix
@@ -177,21 +178,29 @@ func display() {
 
 	// Draw Arrays...
 	modelMatrix = mgl32.Translate3D(-3, 0, -5)
+	// TODO: figure out why the c++ version sends 4 instead of 1.
+	//       maybe it is due to its matrix being stored as 4 arrays...?
 	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
 	gl.DrawArrays(gl.TRIANGLES, 0, 3)
 
 	// DrawElements
 	modelMatrix = mgl32.Translate3D(-1, 0, -5)
+	// TODO: figure out why the c++ version sends 4 instead of 1.
+	//       maybe it is due to its matrix being stored as 4 arrays...?
 	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
 	gl.DrawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil)
 
 	// DrawElementsBaseVertex
 	modelMatrix = mgl32.Translate3D(1, 0, -5)
+	// TODO: figure out why the c++ version sends 4 instead of 1.
+	//       maybe it is due to its matrix being stored as 4 arrays...?
 	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
 	gl.DrawElementsBaseVertex(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil, 1)
 
 	// DrawArraysInstanced
 	modelMatrix = mgl32.Translate3D(3, 0, -5)
+	// TODO: figure out why the c++ version sends 4 instead of 1.
+	//       maybe it is due to its matrix being stored as 4 arrays...?
 	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
 	gl.DrawArraysInstanced(gl.TRIANGLES, 0, 3, 1)
 
