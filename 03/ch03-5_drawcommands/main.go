@@ -72,6 +72,7 @@ func main() {
 		log.Fatalln("failed to create window:", err)
 	}
 	window.MakeContextCurrent()
+	window.SetKeyCallback(keyCallback)
 	Aspect = float32(512) / float32(512)
 
 	if err := gl.Init(); err != nil {
@@ -109,7 +110,7 @@ func initGL() {
 		-1.0, -1.0, 0.0, 1.0,
 		1.0, -1.0, 0.0, 1.0,
 		-1.0, 1.0, 0.0, 1.0,
-		-1.0, -1.0, 0.0, 1.0,
+		//		-1.0, -1.0, 0.0, 1.0,
 	}
 
 	// Color for each vertex
@@ -117,7 +118,7 @@ func initGL() {
 		1.0, 1.0, 1.0, 1.0,
 		1.0, 1.0, 0.0, 1.0,
 		1.0, 0.0, 1.0, 1.0,
-		0.0, 1.0, 1.0, 1.0,
+		//			0.0, 1.0, 1.0, 1.0,
 	}
 
 	// Indices for the triangle strips
@@ -132,19 +133,21 @@ func initGL() {
 	gl.GenBuffers(NumBuffers, &Buffers[0])
 	// Set up the element array buffer
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, Buffers[ElementBuffer])
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(vertexIndices)*4, gl.Ptr(vertexIndices), gl.STATIC_DRAW)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, len(vertexIndices)*2, gl.Ptr(vertexIndices), gl.STATIC_DRAW)
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, Buffers[ArrayBuffer])
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertexPositions)*4+len(vertexColors)*4, nil, gl.STATIC_DRAW)
+	//gl.BufferData(gl.ARRAY_BUFFER, len(vertexPositions)*4, gl.Ptr(vertexPositions), gl.STATIC_DRAW)
 	gl.BufferSubData(gl.ARRAY_BUFFER, 0, len(vertexPositions)*4, gl.Ptr(vertexPositions))
 	gl.BufferSubData(gl.ARRAY_BUFFER, len(vertexPositions)*4, len(vertexColors)*4, gl.Ptr(vertexColors))
 
-	gl.VertexAttribPointer(0, 4, gl.FLOAT, false, 0, nil)
-	//gl.VertexAttribPointer(1, 4, gl.FLOAT, false, 0, gl.Ptr(len(vertexPositions)*4))
-	gl.VertexAttribPointer(1, 4, gl.FLOAT, false, 0, gl.Ptr(vertexPositions))
+	//func VertexAttribPointer(index uint32, size int32, xtype uint32, normalized bool, stride int32, pointer unsafe.Pointer) {
+	gl.VertexAttribPointer(position, 4, gl.FLOAT, false, 0, gl.PtrOffset(0))
+	//gl.VertexAttribPointer(position, 4, gl.FLOAT, false, 0, nil)
+	gl.VertexAttribPointer(color, 4, gl.FLOAT, false, 0, gl.PtrOffset(4))
 
-	gl.EnableVertexAttribArray(0)
-	gl.EnableVertexAttribArray(1)
+	gl.EnableVertexAttribArray(position)
+	gl.EnableVertexAttribArray(color)
 
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 
@@ -167,7 +170,7 @@ func display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 	// Activate simple shading program
-	gl.UseProgram(RenderProg)
+	//gl.UseProgram(RenderProg)
 
 	// Set up the model and projection matrix
 	projectionMatrix := mgl32.Frustum(-1, 1, -Aspect, Aspect, 1, 500)
@@ -183,20 +186,22 @@ func display() {
 	gl.UniformMatrix4fv(renderModelMatrixLoc, 4, false, &modelMatrix[0])
 	gl.DrawArrays(gl.TRIANGLES, 0, 3)
 
-	// DrawElements
-	modelMatrix = mgl32.Translate3D(-1, 0, -5)
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 4, false, &modelMatrix[0])
-	gl.DrawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil)
+	/*
+		// DrawElements
+		modelMatrix = mgl32.Translate3D(-1, 0, -5)
+		gl.UniformMatrix4fv(renderModelMatrixLoc, 4, false, &modelMatrix[0])
+		gl.DrawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil)
 
-	// DrawElementsBaseVertex
-	modelMatrix = mgl32.Translate3D(1, 0, -5)
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 4, false, &modelMatrix[0])
-	gl.DrawElementsBaseVertex(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil, 1)
+		// DrawElementsBaseVertex
+		modelMatrix = mgl32.Translate3D(1, 0, -5)
+		gl.UniformMatrix4fv(renderModelMatrixLoc, 4, false, &modelMatrix[0])
+		gl.DrawElementsBaseVertex(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil, 1)
 
-	// DrawArraysInstanced
-	modelMatrix = mgl32.Translate3D(3, 0, -5)
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 4, false, &modelMatrix[0])
-	gl.DrawArraysInstanced(gl.TRIANGLES, 0, 3, 1)
+		// DrawArraysInstanced
+		modelMatrix = mgl32.Translate3D(3, 0, -5)
+		gl.UniformMatrix4fv(renderModelMatrixLoc, 4, false, &modelMatrix[0])
+		gl.DrawArraysInstanced(gl.TRIANGLES, 0, 3, 1)
+	*/
 
 	gl.Flush()
 }
@@ -223,4 +228,10 @@ func importPathToDir(importPath string) (string, error) {
 		return "", err
 	}
 	return p.Dir, nil
+}
+
+func keyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+	if action == glfw.Release && key == glfw.KeyEscape {
+		w.SetShouldClose(true)
+	}
 }
