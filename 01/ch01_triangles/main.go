@@ -56,6 +56,7 @@ func main() {
 		log.Fatalln("failed to create window:", err)
 	}
 	window.MakeContextCurrent()
+	window.SetKeyCallback(keyCallback)
 
 	if err := gl.Init(); err != nil {
 		log.Fatalln("unable to initialize Glow ... exiting:", err)
@@ -118,7 +119,7 @@ func display() {
 // Set the working directory to the root of Go package, so that its assets can be accessed.
 func init() {
 
-	dir, err := importPathToDir("github.com/hurricanerix/gorb/01/ch01-1_triangles")
+	dir, err := importPathToDir("github.com/hurricanerix/gorb/01/ch01_triangles")
 	if err != nil {
 		log.Fatalln("Unable to find Go package in your GOPATH, it's needed to load assets:", err)
 	}
@@ -137,4 +138,10 @@ func importPathToDir(importPath string) (string, error) {
 		return "", err
 	}
 	return p.Dir, nil
+}
+
+func keyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+	if action == glfw.Release && key == glfw.KeyEscape {
+		w.SetShouldClose(true)
+	}
 }

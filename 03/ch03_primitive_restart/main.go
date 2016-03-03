@@ -174,7 +174,7 @@ func initGL() {
 	gl.EnableVertexAttribArray(1)
 
 	UsePrimitiveRestart = true
-	gl.ClearColor(0.1, 0.3, 0.1, 1.0)
+	gl.ClearColor(0.05, 0.1, 0.05, 1.0)
 }
 
 func update(t float32) {
