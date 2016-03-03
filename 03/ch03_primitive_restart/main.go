@@ -46,7 +46,10 @@ var (
 )
 
 var (
-	Aspect float32
+	Aspect              float32
+	UsePrimitiveRestart bool
+	ModelMatrix         mgl32.Mat4
+	ProjectionMatrix    mgl32.Mat4
 )
 
 const NumVertices = int32(6)
@@ -57,6 +60,10 @@ func init() {
 }
 
 func main() {
+	// There is a slight modification to set the background color
+	// depending on if UsePrimitiveRestart is set.
+	// Press the spacebar to enable/disable primitive restart.
+
 	// NOTE: Using GLFW instead of GLUT
 	if err := glfw.Init(); err != nil {
 		log.Fatalln("failed to initialize glfw:", err)
@@ -82,7 +89,11 @@ func main() {
 
 	initGL()
 
+	var t float32
 	for !window.ShouldClose() {
+		// TODO: Make this time based
+		t += 0.0001
+		update(t)
 		display()
 
 		window.SwapBuffers()
@@ -92,8 +103,8 @@ func main() {
 
 func initGL() {
 	shaders := []shader.Info{
-		shader.Info{Type: gl.VERTEX_SHADER, Filename: "../ch03_primitive_restart/primitive_restart.vert"},
-		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "../ch03_primitive_restart/primitive_restart.frag"},
+		shader.Info{Type: gl.VERTEX_SHADER, Filename: "primitive_restart.vert"},
+		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "primitive_restart.frag"},
 	}
 
 	RenderProg, err := shader.Load(&shaders)
@@ -106,12 +117,16 @@ func initGL() {
 	renderModelMatrixLoc = gl.GetUniformLocation(RenderProg, gl.Str("model_matrix\x00"))
 	renderProjectionMatrixLoc = gl.GetUniformLocation(RenderProg, gl.Str("projection_matrix\x00"))
 
-	// A single triangle
+	// 8 corners of a cube, side length 2, centered on the origin
 	vertexPositions := []float32{
-		-1.0, -1.0, 0.0, 1.0,
-		1.0, -1.0, 0.0, 1.0,
-		-1.0, 1.0, 0.0, 1.0,
-		-1.0, -1.0, 0.0, 1.0,
+		-1.0, -1.0, -1.0, 1.0,
+		-1.0, -1.0, 1.0, 1.0,
+		-1.0, 1.0, -1.0, 1.0,
+		-1.0, 1.0, 1.0, 1.0,
+		1.0, -1.0, -1.0, 1.0,
+		1.0, -1.0, 1.0, 1.0,
+		1.0, 1.0, -1.0, 1.0,
+		1.0, 1.0, 1.0, 1.0,
 	}
 
 	// Color for each vertex
@@ -119,12 +134,18 @@ func initGL() {
 		1.0, 1.0, 1.0, 1.0,
 		1.0, 1.0, 0.0, 1.0,
 		1.0, 0.0, 1.0, 1.0,
+		1.0, 0.0, 0.0, 1.0,
 		0.0, 1.0, 1.0, 1.0,
+		0.0, 1.0, 0.0, 1.0,
+		0.0, 0.0, 1.0, 1.0,
+		0.5, 0.5, 0.5, 1.0,
 	}
 
 	// Indices for the triangle strips
 	vertexIndices := []uint16{
-		0, 1, 2,
+		0, 1, 2, 3, 6, 7, 4, 5, // First strip
+		0xFFFF,                 // <<-- This is the restart index
+		2, 6, 0, 4, 1, 5, 3, 7, // Second strip
 	}
 
 	// Set up the element array buffer
@@ -152,12 +173,22 @@ func initGL() {
 	gl.EnableVertexAttribArray(0)
 	gl.EnableVertexAttribArray(1)
 
-	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
+	UsePrimitiveRestart = true
+	gl.ClearColor(0.3, 0.6, 0.3, 1.0)
+}
+
+func update(t float32) {
+	//static float q = 0.0f;
+	//X := mgl32.Vec3{1, 0, 0}
+	Y := mgl32.Vec3{0, 1, 0}
+	Z := mgl32.Vec3{0, 0, 1}
+
+	// Set up the model and projection matrix
+	ModelMatrix = mgl32.Translate3D(0, 0, -5).Mul4(mgl32.HomogRotate3D(t*360, Y)).Mul4(mgl32.HomogRotate3D(t*720, Z))
+	ProjectionMatrix = mgl32.Frustum(-1, 1, -Aspect, Aspect, 1, 500)
 }
 
 func display() {
-	var modelMatrix mgl32.Mat4
-
 	// Setup
 	gl.Enable(gl.CULL_FACE)
 	gl.Disable(gl.DEPTH_TEST)
@@ -168,41 +199,25 @@ func display() {
 	// TODO: figure out why enabling this does not work
 	//gl.UseProgram(RenderProg)
 
-	// Set up the model and projection matrix
-	projectionMatrix := mgl32.Frustum(-1, 1, -Aspect, Aspect, 1, 500)
-	gl.UniformMatrix4fv(renderProjectionMatrixLoc, 1, false, &projectionMatrix[0])
+	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &ModelMatrix[0])
+	gl.UniformMatrix4fv(renderProjectionMatrixLoc, 1, false, &ProjectionMatrix[0])
 
 	// Set up for a glDrawElements call
 	gl.BindVertexArray(VAOs[Triangles])
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, Buffers[ElementBuffer])
 
-	// Draw Arrays...
-	modelMatrix = mgl32.Translate3D(-3, 0, -5)
-	// TODO: figure out why the c++ version sends 4 instead of 1.
-	//       maybe it is due to its matrix being stored as 4 arrays...?
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
-	gl.DrawArrays(gl.TRIANGLES, 0, 3)
-
-	// DrawElements
-	modelMatrix = mgl32.Translate3D(-1, 0, -5)
-	// TODO: figure out why the c++ version sends 4 instead of 1.
-	//       maybe it is due to its matrix being stored as 4 arrays...?
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
-	gl.DrawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil)
-
-	// DrawElementsBaseVertex
-	modelMatrix = mgl32.Translate3D(1, 0, -5)
-	// TODO: figure out why the c++ version sends 4 instead of 1.
-	//       maybe it is due to its matrix being stored as 4 arrays...?
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
-	gl.DrawElementsBaseVertex(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil, 1)
-
-	// DrawArraysInstanced
-	modelMatrix = mgl32.Translate3D(3, 0, -5)
-	// TODO: figure out why the c++ version sends 4 instead of 1.
-	//       maybe it is due to its matrix being stored as 4 arrays...?
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
-	gl.DrawArraysInstanced(gl.TRIANGLES, 0, 3, 1)
+	if UsePrimitiveRestart {
+		// When primitive restart is on, we can call one draw command
+		gl.ClearColor(0.3, 0.6, 0.3, 1.0)
+		gl.Enable(gl.PRIMITIVE_RESTART)
+		gl.PrimitiveRestartIndex(0xFFFF)
+		gl.DrawElements(gl.TRIANGLE_STRIP, 17, gl.UNSIGNED_SHORT, nil)
+	} else {
+		gl.ClearColor(0.3, 0.3, 0.6, 1.0)
+		// Without primitive restart, we need to call two draw commands
+		gl.DrawElements(gl.TRIANGLE_STRIP, 8, gl.UNSIGNED_SHORT, nil)
+		gl.DrawElements(gl.TRIANGLE_STRIP, 8, gl.UNSIGNED_SHORT, gl.PtrOffset(9*2)) // (const GLvoid *)(9 * sizeof(GLushort))
+	}
 
 	gl.Flush()
 }
@@ -210,7 +225,7 @@ func display() {
 // Set the working directory to the root of Go package, so that its assets can be accessed.
 func init() {
 
-	dir, err := importPathToDir("github.com/hurricanerix/gorb/03/ch03-5_drawcommands")
+	dir, err := importPathToDir("github.com/hurricanerix/gorb/03/ch03_primitive_restart")
 	if err != nil {
 		log.Fatalln("Unable to find Go package in your GOPATH, it's needed to load assets:", err)
 	}
@@ -234,5 +249,8 @@ func importPathToDir(importPath string) (string, error) {
 func keyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	if action == glfw.Release && key == glfw.KeyEscape {
 		w.SetShouldClose(true)
+	}
+	if action == glfw.Release && key == glfw.KeySpace {
+		UsePrimitiveRestart = !UsePrimitiveRestart
 	}
 }
