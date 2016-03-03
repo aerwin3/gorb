@@ -174,7 +174,7 @@ func initGL() {
 	gl.EnableVertexAttribArray(1)
 
 	UsePrimitiveRestart = true
-	gl.ClearColor(0.3, 0.6, 0.3, 1.0)
+	gl.ClearColor(0.1, 0.3, 0.1, 1.0)
 }
 
 func update(t float32) {
@@ -208,12 +208,12 @@ func display() {
 
 	if UsePrimitiveRestart {
 		// When primitive restart is on, we can call one draw command
-		gl.ClearColor(0.3, 0.6, 0.3, 1.0)
+		gl.ClearColor(0.05, 0.1, 0.05, 1.0)
 		gl.Enable(gl.PRIMITIVE_RESTART)
 		gl.PrimitiveRestartIndex(0xFFFF)
 		gl.DrawElements(gl.TRIANGLE_STRIP, 17, gl.UNSIGNED_SHORT, nil)
 	} else {
-		gl.ClearColor(0.3, 0.3, 0.6, 1.0)
+		gl.ClearColor(0.05, 0.05, 0.1, 1.0)
 		// Without primitive restart, we need to call two draw commands
 		gl.DrawElements(gl.TRIANGLE_STRIP, 8, gl.UNSIGNED_SHORT, nil)
 		gl.DrawElements(gl.TRIANGLE_STRIP, 8, gl.UNSIGNED_SHORT, gl.PtrOffset(9*2)) // (const GLvoid *)(9 * sizeof(GLushort))
