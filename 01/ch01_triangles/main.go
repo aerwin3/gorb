@@ -1,16 +1,25 @@
-// Modified from Example 1.1: triangles.cpp
-// OpenGL Programming Guide (Eighth Edition)
+// Copyright 2016 Richard Hawkins
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package main
 
 import (
-	"go/build"
-	"log"
-	"os"
-	"runtime"
-
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/hurricanerix/gorb/shader"
+	"github.com/hurricanerix/gorb/utils"
+	"github.com/hurricanerix/gorb/utils/app"
 )
 
 const ( // VAO_IDs
@@ -27,52 +36,13 @@ const ( // Attrib IDs
 	vPosition = 0
 )
 
-var (
-	VAOs    [NumVAOs]uint32
-	Buffers [NumBuffers]uint32
-)
-
-const NumVertices = int32(6)
-
-func init() {
-	// GLFW event handling must run on the main OS thread
-	runtime.LockOSThread()
+type scene struct {
+	VAOs        [NumVAOs]uint32
+	Buffers     [NumBuffers]uint32
+	NumVertices int32
 }
 
-func main() {
-	// NOTE: Using GLFW instead of GLUT
-	if err := glfw.Init(); err != nil {
-		log.Fatalln("failed to initialize glfw:", err)
-	}
-	defer glfw.Terminate()
-
-	glfw.WindowHint(glfw.Resizable, glfw.False)
-	glfw.WindowHint(glfw.ContextVersionMajor, 4)
-	glfw.WindowHint(glfw.ContextVersionMinor, 1)
-	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
-	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
-	window, err := glfw.CreateWindow(512, 512, os.Args[0], nil, nil)
-	if err != nil {
-		log.Fatalln("failed to create window:", err)
-	}
-	window.MakeContextCurrent()
-	window.SetKeyCallback(keyCallback)
-
-	if err := gl.Init(); err != nil {
-		log.Fatalln("unable to initialize Glow ... exiting:", err)
-	}
-
-	initGL()
-
-	for !window.ShouldClose() {
-		display()
-
-		window.SwapBuffers()
-		glfw.PollEvents()
-	}
-}
-
-func initGL() {
+func (s *scene) Setup() error {
 	shaders := []shader.Info{
 		shader.Info{Type: gl.VERTEX_SHADER, Filename: "triangles.vert"},
 		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "triangles.frag"},
@@ -80,7 +50,7 @@ func initGL() {
 
 	program, err := shader.Load(&shaders)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	gl.UseProgram(program)
@@ -93,55 +63,62 @@ func initGL() {
 		0.90, 0.90,
 		-0.85, 0.90,
 	}
+	s.NumVertices = int32(len(vertices))
 
-	gl.GenVertexArrays(NumVAOs, &VAOs[0])
-	gl.BindVertexArray(VAOs[Triangles])
+	gl.GenVertexArrays(NumVAOs, &s.VAOs[0])
+	gl.BindVertexArray(s.VAOs[Triangles])
 
-	gl.GenBuffers(NumBuffers, &Buffers[0])
-	gl.BindBuffer(gl.ARRAY_BUFFER, Buffers[ArrayBuffer])
+	gl.GenBuffers(NumBuffers, &s.Buffers[0])
+	gl.BindBuffer(gl.ARRAY_BUFFER, s.Buffers[ArrayBuffer])
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
 
 	gl.VertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, gl.PtrOffset(0))
 	gl.EnableVertexAttribArray(vPosition)
 
 	gl.BindFragDataLocation(program, 0, gl.Str("fColor\x00"))
+	return nil
 }
 
-func display() {
+func (s *scene) Update(dt float32) {
+	// This is where you would put code to update your scene.
+	// This scene does not change, so there is nothing here.
+}
+
+func (s *scene) Display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
-	gl.BindVertexArray(VAOs[Triangles])
-	gl.DrawArrays(gl.TRIANGLES, 0, NumVertices)
+	gl.BindVertexArray(s.VAOs[Triangles])
+	gl.DrawArrays(gl.TRIANGLES, 0, s.NumVertices)
 
 	gl.Flush()
 }
 
-// Set the working directory to the root of Go package, so that its assets can be accessed.
+func (s *scene) Cleanup() {
+	// TODO: cleanup
+}
+
+// Main methods
 func init() {
-
-	dir, err := importPathToDir("github.com/hurricanerix/gorb/01/ch01_triangles")
-	if err != nil {
-		log.Fatalln("Unable to find Go package in your GOPATH, it's needed to load assets:", err)
-	}
-	err = os.Chdir(dir)
-	if err != nil {
-		log.Panicln("os.Chdir:", err)
+	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/01/ch01_triangles"); err != nil {
+		panic(err)
 	}
 }
 
-// importPathToDir resolves the absolute path from importPath.
-// There doesn't need to be a valid Go package inside that import path,
-// but the directory must exist.
-func importPathToDir(importPath string) (string, error) {
-	p, err := build.Import(importPath, "", build.FindOnly)
-	if err != nil {
-		return "", err
+func main() {
+	c := app.Config{
+		DefaultScreenWidth:  512,
+		DefaultScreenHeight: 512,
+		EscapeToQuit:        true,
+		SupportedGLVers: []mgl32.Vec2{
+			mgl32.Vec2{4, 3},
+			mgl32.Vec2{4, 1},
+		},
 	}
-	return p.Dir, nil
-}
 
-func keyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-	if action == glfw.Release && key == glfw.KeyEscape {
-		w.SetShouldClose(true)
+	s := &scene{}
+
+	a := app.New(c, s)
+	if err := a.Run(); err != nil {
+		panic(err)
 	}
 }
