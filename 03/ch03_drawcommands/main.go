@@ -1,5 +1,4 @@
-// Modified from Example 3.5: ch03_drawcommands.cpp
-// OpenGL Programming Guide (Eighth Edition)
+// Example modified from OpenGL Programming Guide (Eighth Edition)
 package main
 
 import (
