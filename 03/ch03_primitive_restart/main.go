@@ -11,7 +11,7 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/hurricanerix/gorb/shader"
+	"github.com/hurricanerix/gorb/utils/shader"
 )
 
 const ( // VAO IDs

@@ -4,9 +4,9 @@ package main
 import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/hurricanerix/gorb/shader"
 	"github.com/hurricanerix/gorb/utils"
 	"github.com/hurricanerix/gorb/utils/app"
+	"github.com/hurricanerix/gorb/utils/shader"
 )
 
 const ( // VAO_IDs
