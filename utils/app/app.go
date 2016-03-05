@@ -27,6 +27,10 @@ func init() {
 	flag.IntVar(&screen, "screen", 0, "Set screen to display on. If set to 0, will run in windowed mode, otherwise will run in fullscreen mode.")
 }
 
+var (
+	sceneKeyCallback func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey)
+)
+
 // Scene to be rendered by the app.
 type Scene interface {
 	// Setup any OpenGL requirements for the scene.
@@ -63,6 +67,7 @@ type Config struct {
 	// responsibility of the Scene to ensure that valid calls for the version
 	// of OpenGL are provided.
 	SupportedGLVers []mgl32.Vec2
+	KeyCallback     func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey)
 }
 
 // Context of the app.
@@ -144,12 +149,16 @@ func (a *Context) Run() error {
 
 	a.Scene.Setup()
 
+	sceneKeyCallback = a.Config.KeyCallback
+
 	if a.Config.EscapeToQuit {
-		window.SetKeyCallback(quitKeyCallback)
+		window.SetKeyCallback(keyCallback)
 	}
 
+	// TODO: Change to reflect the time between ticks
+	dt := float32(0.0001)
 	for !window.ShouldClose() {
-		a.Scene.Update(0)
+		a.Scene.Update(dt)
 		a.Scene.Display()
 
 		window.SwapBuffers()
@@ -160,8 +169,11 @@ func (a *Context) Run() error {
 	return nil
 }
 
-func quitKeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+func keyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	if action == glfw.Release && key == glfw.KeyEscape {
 		w.SetShouldClose(true)
+	}
+	if sceneKeyCallback != nil {
+		sceneKeyCallback(w, key, scancode, action, mods)
 	}
 }
