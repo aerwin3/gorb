@@ -141,11 +141,17 @@ func (a *Context) Run() error {
 		}
 		break
 	}
+
 	window.MakeContextCurrent()
 
 	if err := gl.Init(); err != nil {
 		return fmt.Errorf("unable to initialize Glow ... exiting: %s", err)
 	}
+
+	fmt.Println("OpenGL vendor", gl.GoStr(gl.GetString(gl.VENDOR)))
+	fmt.Println("OpenGL renderer", gl.GoStr(gl.GetString(gl.RENDERER)))
+	fmt.Println("OpenGL version", gl.GoStr(gl.GetString(gl.VERSION)))
+	fmt.Println("GLSL version", gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION)))
 
 	a.Scene.Setup()
 
