@@ -2,6 +2,8 @@
 package main
 
 import (
+	"unsafe"
+
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/hurricanerix/gorb/utils"
@@ -9,23 +11,29 @@ import (
 	"github.com/hurricanerix/gorb/utils/shader"
 )
 
-const ( // VAO_IDs
-	Triangles = iota
-	NumVAOs   = iota
+const ( // Program IDs
+	trianglesProgID = iota
+	numPrograms     = iota
 )
 
-const ( // Buffer IDs
-	ArrayBuffer = iota
-	NumBuffers  = iota
+const ( // VAO Names
+	trianglesName = iota
+	numVAOs       = iota
 )
 
-const ( // Attrib IDs
-	vPosition = 0
+const ( // Buffer Names
+	arrayBufferName = iota
+	numBuffers      = iota
+)
+
+const ( // Attrib Locations
+	mcVertexLoc = 0
 )
 
 type scene struct {
-	VAOs        [NumVAOs]uint32
-	Buffers     [NumBuffers]uint32
+	Programs    [numPrograms]uint32
+	VAOs        [numVAOs]uint32
+	Buffers     [numBuffers]uint32
 	NumVertices int32
 }
 
@@ -39,8 +47,9 @@ func (s *scene) Setup() error {
 	if err != nil {
 		return err
 	}
+	s.Programs[trianglesProgID] = program
 
-	gl.UseProgram(program)
+	gl.UseProgram(s.Programs[trianglesProgID])
 
 	vertices := []float32{
 		-0.90, -0.90, // Triangle 1
@@ -52,17 +61,17 @@ func (s *scene) Setup() error {
 	}
 	s.NumVertices = int32(len(vertices))
 
-	gl.GenVertexArrays(NumVAOs, &s.VAOs[0])
-	gl.BindVertexArray(s.VAOs[Triangles])
+	gl.GenVertexArrays(numVAOs, &s.VAOs[0])
+	gl.BindVertexArray(s.VAOs[trianglesName])
 
-	gl.GenBuffers(NumBuffers, &s.Buffers[0])
-	gl.BindBuffer(gl.ARRAY_BUFFER, s.Buffers[ArrayBuffer])
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
+	sizeVertices := len(vertices) * int(unsafe.Sizeof(vertices[0]))
+	gl.GenBuffers(numBuffers, &s.Buffers[0])
+	gl.BindBuffer(gl.ARRAY_BUFFER, s.Buffers[arrayBufferName])
+	gl.BufferData(gl.ARRAY_BUFFER, sizeVertices, gl.Ptr(vertices), gl.STATIC_DRAW)
 
-	gl.VertexAttribPointer(vPosition, 2, gl.FLOAT, false, 0, gl.PtrOffset(0))
-	gl.EnableVertexAttribArray(vPosition)
+	gl.VertexAttribPointer(mcVertexLoc, 2, gl.FLOAT, false, 0, gl.PtrOffset(0))
+	gl.EnableVertexAttribArray(mcVertexLoc)
 
-	gl.BindFragDataLocation(program, 0, gl.Str("fColor\x00"))
 	return nil
 }
 
@@ -74,14 +83,19 @@ func (s *scene) Update(dt float32) {
 func (s *scene) Display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
-	gl.BindVertexArray(s.VAOs[Triangles])
+	gl.BindVertexArray(s.VAOs[trianglesName])
 	gl.DrawArrays(gl.TRIANGLES, 0, s.NumVertices)
 
 	gl.Flush()
 }
 
 func (s *scene) Cleanup() {
-	// TODO: cleanup
+	var id uint32
+	for i := 0; i < numPrograms; i++ {
+		id = s.Programs[i]
+		gl.UseProgram(id)
+		gl.DeleteProgram(id)
+	}
 }
 
 // Main methods
