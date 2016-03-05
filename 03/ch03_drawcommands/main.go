@@ -2,15 +2,13 @@
 package main
 
 import (
-	"go/build"
-	"log"
-	"os"
 	"runtime"
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/hurricanerix/gorb/utils"
+	"github.com/hurricanerix/gorb/utils/app"
 	"github.com/hurricanerix/gorb/utils/shader"
 )
 
@@ -25,14 +23,14 @@ const ( // Buffer IDs
 	NumBuffers    = iota
 )
 
-var ( // Uniform IDs
-	renderModelMatrixLoc      int32
-	renderProjectionMatrixLoc int32
-)
-
 const ( // Attrib IDs
 	position = 0
 	color    = 1
+)
+
+var ( // Uniform IDs
+	renderModelMatrixLoc      int32
+	renderProjectionMatrixLoc int32
 )
 
 var ( // Program IDs
@@ -50,46 +48,9 @@ var (
 
 const NumVertices = int32(6)
 
-func init() {
-	// GLFW event handling must run on the main OS thread
-	runtime.LockOSThread()
-}
+type scene struct{}
 
-func main() {
-	// NOTE: Using GLFW instead of GLUT
-	if err := glfw.Init(); err != nil {
-		log.Fatalln("failed to initialize glfw:", err)
-	}
-	defer glfw.Terminate()
-
-	glfw.WindowHint(glfw.Resizable, glfw.False)
-	glfw.WindowHint(glfw.ContextVersionMajor, 4)
-	glfw.WindowHint(glfw.ContextVersionMinor, 1)
-	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
-	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
-	window, err := glfw.CreateWindow(512, 512, os.Args[0], nil, nil)
-	if err != nil {
-		log.Fatalln("failed to create window:", err)
-	}
-	window.MakeContextCurrent()
-	window.SetKeyCallback(keyCallback)
-	Aspect = float32(512) / float32(512)
-
-	if err := gl.Init(); err != nil {
-		log.Fatalln("unable to initialize Glow ... exiting:", err)
-	}
-
-	initGL()
-
-	for !window.ShouldClose() {
-		display()
-
-		window.SwapBuffers()
-		glfw.PollEvents()
-	}
-}
-
-func initGL() {
+func (s *scene) Setup() error {
 	shaders := []shader.Info{
 		shader.Info{Type: gl.VERTEX_SHADER, Filename: "../ch03_primitive_restart/primitive_restart.vert"},
 		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "../ch03_primitive_restart/primitive_restart.frag"},
@@ -152,9 +113,14 @@ func initGL() {
 	gl.EnableVertexAttribArray(1)
 
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
+	return nil
 }
 
-func display() {
+func (s *scene) Update(dt float32) {
+
+}
+
+func (s *scene) Display() {
 	var modelMatrix mgl32.Mat4
 
 	// Setup
@@ -206,32 +172,35 @@ func display() {
 	gl.Flush()
 }
 
-// Set the working directory to the root of Go package, so that its assets can be accessed.
+func (s *scene) Cleanup() {
+}
+
+// Main methods
 func init() {
-
-	dir, err := importPathToDir("github.com/hurricanerix/gorb/03/ch03_drawcommands")
-	if err != nil {
-		log.Fatalln("Unable to find Go package in your GOPATH, it's needed to load assets:", err)
-	}
-	err = os.Chdir(dir)
-	if err != nil {
-		log.Panicln("os.Chdir:", err)
+	runtime.LockOSThread()
+	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/03/ch03_drawcommands"); err != nil {
+		panic(err)
 	}
 }
 
-// importPathToDir resolves the absolute path from importPath.
-// There doesn't need to be a valid Go package inside that import path,
-// but the directory must exist.
-func importPathToDir(importPath string) (string, error) {
-	p, err := build.Import(importPath, "", build.FindOnly)
-	if err != nil {
-		return "", err
+func main() {
+	c := app.Config{
+		DefaultScreenWidth:  512,
+		DefaultScreenHeight: 512,
+		EscapeToQuit:        true,
+		SupportedGLVers: []mgl32.Vec2{
+			mgl32.Vec2{4, 3},
+			mgl32.Vec2{4, 1},
+		},
 	}
-	return p.Dir, nil
-}
+	// TODO: Get the w/h to calculate the correct aspect ratio
+	Aspect = float32(512) / float32(512)
 
-func keyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-	if action == glfw.Release && key == glfw.KeyEscape {
-		w.SetShouldClose(true)
+	s := &scene{}
+
+	a := app.New(c, s)
+
+	if err := a.Run(); err != nil {
+		panic(err)
 	}
 }
