@@ -12,47 +12,47 @@ import (
 	"github.com/hurricanerix/gorb/utils/shader"
 )
 
+const ( // Program IDs
+	primRestartProgID = iota
+	numPrograms       = iota
+)
+
 const ( // VAO IDs
-	Triangles = iota
-	NumVAOs   = iota
+	trianglesName = iota
+	numVAOs       = iota
 )
 
 const ( // Buffer IDs
-	ArrayBuffer   = iota
-	ElementBuffer = iota
-	NumBuffers    = iota
+	arrayBufferName   = iota
+	elementBufferName = iota
+	numBuffers        = iota
 )
 
-const ( // Attrib IDs
-	position = 0
-	color    = 1
-)
-
-var ( // Uniform IDs
-	renderModelMatrixLoc      int32
-	renderProjectionMatrixLoc int32
-)
-
-var ( // Program IDs
-	RenderProg uint32
-)
-
-var (
-	VAOs    [NumVAOs]uint32
-	Buffers [NumBuffers]uint32
+const ( // Attrib Locations
+	position = 0 // TODO: rename to mcVertexLoc
+	color    = 1 // TODO: rename to mcColorLoc
 )
 
 var (
 	Aspect              float32
 	UsePrimitiveRestart bool
-	ModelMatrix         mgl32.Mat4
-	ProjectionMatrix    mgl32.Mat4
-	Rotation            float32
 )
 
 const NumVertices = int32(6)
 
-type scene struct{}
+type scene struct {
+	Programs    [numPrograms]uint32
+	VAOs        [numVAOs]uint32
+	NumVertices [numVAOs]int32
+	Buffers     [numBuffers]uint32
+	// Uniform Locations
+	ModelMatrixLoc      int32
+	ProjectionMatrixLoc int32
+	// App Settings
+	ModelMatrix      mgl32.Mat4
+	ProjectionMatrix mgl32.Mat4
+	Rotation         float32
+}
 
 func (s *scene) Setup() error {
 	shaders := []shader.Info{
@@ -60,15 +60,16 @@ func (s *scene) Setup() error {
 		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "primitive_restart.frag"},
 	}
 
-	RenderProg, err := shader.Load(&shaders)
+	program, err := shader.Load(&shaders)
 	if err != nil {
 		panic(err)
 	}
+	s.Programs[primRestartProgID] = program
 
-	gl.UseProgram(RenderProg)
+	gl.UseProgram(s.Programs[primRestartProgID])
 
-	renderModelMatrixLoc = gl.GetUniformLocation(RenderProg, gl.Str("model_matrix\x00"))
-	renderProjectionMatrixLoc = gl.GetUniformLocation(RenderProg, gl.Str("projection_matrix\x00"))
+	s.ModelMatrixLoc = gl.GetUniformLocation(s.Programs[primRestartProgID], gl.Str("model_matrix\x00"))
+	s.ProjectionMatrixLoc = gl.GetUniformLocation(s.Programs[primRestartProgID], gl.Str("projection_matrix\x00"))
 
 	// 8 corners of a cube, side length 2, centered on the origin
 	vertexPositions := []float32{
@@ -81,6 +82,7 @@ func (s *scene) Setup() error {
 		1.0, 1.0, -1.0, 1.0,
 		1.0, 1.0, 1.0, 1.0,
 	}
+	s.NumVertices[trianglesName] = int32(len(vertexPositions))
 
 	// Color for each vertex
 	vertexColors := []float32{
@@ -104,19 +106,19 @@ func (s *scene) Setup() error {
 	// Set up the element array buffer
 	sizeVertexIndices := len(vertexIndices) * int(unsafe.Sizeof(vertexIndices[0]))
 
-	gl.GenBuffers(1, &Buffers[ElementBuffer])
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, Buffers[ElementBuffer])
+	gl.GenBuffers(numBuffers, &s.Buffers[0])
+
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, s.Buffers[elementBufferName])
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, sizeVertexIndices, gl.Ptr(vertexIndices), gl.STATIC_DRAW)
 
 	// Set up the vertex attributes
 	sizeVertexPositions := len(vertexPositions) * int(unsafe.Sizeof(vertexPositions[0]))
 	sizeVertexColors := len(vertexColors) * int(unsafe.Sizeof(vertexColors[0]))
 
-	gl.GenVertexArrays(1, &VAOs[Triangles])
-	gl.BindVertexArray(VAOs[Triangles])
+	gl.GenVertexArrays(numVAOs, &s.VAOs[0])
+	gl.BindVertexArray(s.VAOs[trianglesName])
 
-	gl.GenBuffers(1, &Buffers[ArrayBuffer])
-	gl.BindBuffer(gl.ARRAY_BUFFER, Buffers[ArrayBuffer])
+	gl.BindBuffer(gl.ARRAY_BUFFER, s.Buffers[arrayBufferName])
 	gl.BufferData(gl.ARRAY_BUFFER, sizeVertexPositions+sizeVertexColors, nil, gl.STATIC_DRAW)
 	gl.BufferSubData(gl.ARRAY_BUFFER, 0, sizeVertexPositions, gl.Ptr(vertexPositions))
 	gl.BufferSubData(gl.ARRAY_BUFFER, sizeVertexPositions, sizeVertexColors, gl.Ptr(vertexColors))
@@ -129,20 +131,20 @@ func (s *scene) Setup() error {
 	UsePrimitiveRestart = true
 	gl.ClearColor(0.05, 0.1, 0.05, 1.0)
 
-	Rotation = 0
+	s.Rotation = 0
 	return nil
 }
 
 func (s *scene) Update(dt float32) {
-	Rotation += dt
+	s.Rotation += dt
 	//static float q = 0.0f;
 	//X := mgl32.Vec3{1, 0, 0}
 	Y := mgl32.Vec3{0, 1, 0}
 	Z := mgl32.Vec3{0, 0, 1}
 
 	// Set up the model and projection matrix
-	ModelMatrix = mgl32.Translate3D(0, 0, -5).Mul4(mgl32.HomogRotate3D(Rotation*360, Y)).Mul4(mgl32.HomogRotate3D(Rotation*720, Z))
-	ProjectionMatrix = mgl32.Frustum(-1, 1, -Aspect, Aspect, 1, 500)
+	s.ModelMatrix = mgl32.Translate3D(0, 0, -5).Mul4(mgl32.HomogRotate3D(s.Rotation*360, Y)).Mul4(mgl32.HomogRotate3D(s.Rotation*720, Z))
+	s.ProjectionMatrix = mgl32.Frustum(-1, 1, -Aspect, Aspect, 1, 500)
 }
 
 func (s *scene) Display() {
@@ -156,12 +158,12 @@ func (s *scene) Display() {
 	// TODO: figure out why enabling this does not work
 	//gl.UseProgram(RenderProg)
 
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &ModelMatrix[0])
-	gl.UniformMatrix4fv(renderProjectionMatrixLoc, 1, false, &ProjectionMatrix[0])
+	gl.UniformMatrix4fv(s.ModelMatrixLoc, 1, false, &s.ModelMatrix[0])
+	gl.UniformMatrix4fv(s.ProjectionMatrixLoc, 1, false, &s.ProjectionMatrix[0])
 
 	// Set up for a glDrawElements call
-	gl.BindVertexArray(VAOs[Triangles])
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, Buffers[ElementBuffer])
+	gl.BindVertexArray(s.VAOs[trianglesName])
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, s.Buffers[elementBufferName])
 
 	if UsePrimitiveRestart {
 		// When primitive restart is on, we can call one draw command
@@ -184,7 +186,7 @@ func (s *scene) Cleanup() {
 
 // Main methods
 func init() {
-	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/03/ch03_primitive_restart"); err != nil {
+	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/03/primitive_restart"); err != nil {
 		panic(err)
 	}
 }
@@ -197,6 +199,7 @@ func KeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action,
 
 func main() {
 	c := app.Config{
+		Name:                "Ch3-PrimitiveRestart",
 		DefaultScreenWidth:  512,
 		DefaultScreenHeight: 512,
 		EscapeToQuit:        true,

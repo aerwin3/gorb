@@ -1,4 +1,4 @@
 bin/*
 01/triangles/triangles
-03/ch03_drawcommands/ch03_drawcommands
-03/ch03_primitive_restart/ch03_primitive_restart
+03/drawcommands/drawcommands
+03/primitive_restart/primitive_restart
