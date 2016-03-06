@@ -1,11 +1,10 @@
-// Modified from Example 1.3: triangles.frag
-// OpenGL Programming Guide (Eighth Edition)
+// Modified from OpenGL Programming Guide (Eighth Edition)
 #version 410 core
 
-out vec4 fColor;
+out vec4 fragColor;
 
 void
 main()
 {
-	fColor = vec4(0.0, 0.0, 1.0, 1.0);
+	fragColor = vec4(0.0, 0.0, 1.0, 1.0);
 }

@@ -1,11 +1,10 @@
-// Modified from Example 1.2: triangles.vert
-// OpenGL Programming Guide (Eighth Edition)
+// Modified from OpenGL Programming Guide (Eighth Edition)
 #version 410 core
 
-layout (location = 0) in vec4 vPosition;
+layout (location = 0) in vec4 mcVertex;
 
 void
 main()
 {
-	gl_Position = vPosition;
+	gl_Position = mcVertex;
 }
