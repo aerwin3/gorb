@@ -153,7 +153,9 @@ func (a *Context) Run() error {
 	fmt.Println("OpenGL version", gl.GoStr(gl.GetString(gl.VERSION)))
 	fmt.Println("GLSL version", gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION)))
 
-	a.Scene.Setup()
+	if err := a.Scene.Setup(); err != nil {
+		return err
+	}
 
 	sceneKeyCallback = a.Config.KeyCallback
 
