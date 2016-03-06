@@ -22,7 +22,7 @@ of the example.
   * [Triangles](./01/triangles/README.md)
 
 #### Chapter 3: Drawing with OpenGL
-  * [Draw Commands](./03/ch03_drawcommands/README.md)
+  * [Draw Commands](./03/drawcommands/README.md)
   * [Primitive Restart](./03/ch03_primitive_restart/README.md)
 
 # Running Examples

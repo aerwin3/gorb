@@ -33,8 +33,8 @@ const ( // Attrib Locations
 type scene struct {
 	Programs    [numPrograms]uint32
 	VAOs        [numVAOs]uint32
+	NumVertices [numVAOs]int32
 	Buffers     [numBuffers]uint32
-	NumVertices int32
 }
 
 func (s *scene) Setup() error {
@@ -59,7 +59,7 @@ func (s *scene) Setup() error {
 		0.90, 0.90,
 		-0.85, 0.90,
 	}
-	s.NumVertices = int32(len(vertices))
+	s.NumVertices[trianglesName] = int32(len(vertices))
 
 	gl.GenVertexArrays(numVAOs, &s.VAOs[0])
 	gl.BindVertexArray(s.VAOs[trianglesName])
@@ -84,7 +84,7 @@ func (s *scene) Display() {
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
 	gl.BindVertexArray(s.VAOs[trianglesName])
-	gl.DrawArrays(gl.TRIANGLES, 0, s.NumVertices)
+	gl.DrawArrays(gl.TRIANGLES, 0, s.NumVertices[trianglesName])
 
 	gl.Flush()
 }

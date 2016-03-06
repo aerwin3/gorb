@@ -12,43 +12,40 @@ import (
 	"github.com/hurricanerix/gorb/utils/shader"
 )
 
-const ( // VAO IDs
-	Triangles = iota
-	NumVAOs   = iota
+const ( // Program IDs
+	primRestartProgID = iota
+	numPrograms       = iota
 )
 
-const ( // Buffer IDs
-	ArrayBuffer   = iota
-	ElementBuffer = iota
-	NumBuffers    = iota
+const ( // VAO Names
+	trianglesName = iota
+	numVAOs       = iota
 )
 
-const ( // Attrib IDs
-	position = 0
-	color    = 1
+const ( // Buffer Names
+	arrayBufferName   = iota
+	elementBufferName = iota
+	numBuffers        = iota
 )
 
-var ( // Uniform IDs
-	renderModelMatrixLoc      int32
-	renderProjectionMatrixLoc int32
-)
-
-var ( // Program IDs
-	RenderProg uint32
-)
-
-var (
-	VAOs    [NumVAOs]uint32
-	Buffers [NumBuffers]uint32
+const ( // Attrib Locations
+	position = 0 // TODO: rename to mcVertexLoc
+	color    = 1 // TODO: rename to mcColorLoc
 )
 
 var (
 	Aspect float32
 )
 
-const NumVertices = int32(6)
-
-type scene struct{}
+type scene struct {
+	Programs    [numPrograms]uint32
+	VAOs        [numVAOs]uint32
+	NumVertices [numVAOs]int32
+	Buffers     [numBuffers]uint32
+	// Uniform Locations
+	ModelMatrixLoc      int32
+	ProjectionMatrixLoc int32
+}
 
 func (s *scene) Setup() error {
 	shaders := []shader.Info{
@@ -56,15 +53,16 @@ func (s *scene) Setup() error {
 		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "../ch03_primitive_restart/primitive_restart.frag"},
 	}
 
-	RenderProg, err := shader.Load(&shaders)
+	program, err := shader.Load(&shaders)
 	if err != nil {
 		panic(err)
 	}
+	s.Programs[primRestartProgID] = program
 
-	gl.UseProgram(RenderProg)
+	gl.UseProgram(s.Programs[primRestartProgID])
 
-	renderModelMatrixLoc = gl.GetUniformLocation(RenderProg, gl.Str("model_matrix\x00"))
-	renderProjectionMatrixLoc = gl.GetUniformLocation(RenderProg, gl.Str("projection_matrix\x00"))
+	s.ModelMatrixLoc = gl.GetUniformLocation(s.Programs[primRestartProgID], gl.Str("model_matrix\x00"))
+	s.ProjectionMatrixLoc = gl.GetUniformLocation(s.Programs[primRestartProgID], gl.Str("projection_matrix\x00"))
 
 	// A single triangle
 	vertexPositions := []float32{
@@ -73,6 +71,7 @@ func (s *scene) Setup() error {
 		-1.0, 1.0, 0.0, 1.0,
 		-1.0, -1.0, 0.0, 1.0,
 	}
+	s.NumVertices[trianglesName] = int32(len(vertexPositions))
 
 	// Color for each vertex
 	vertexColors := []float32{
@@ -90,19 +89,18 @@ func (s *scene) Setup() error {
 	// Set up the element array buffer
 	sizeVertexIndices := len(vertexIndices) * int(unsafe.Sizeof(vertexIndices[0]))
 
-	gl.GenBuffers(1, &Buffers[ElementBuffer])
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, Buffers[ElementBuffer])
+	gl.GenBuffers(numBuffers, &s.Buffers[0])
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, s.Buffers[elementBufferName])
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, sizeVertexIndices, gl.Ptr(vertexIndices), gl.STATIC_DRAW)
 
 	// Set up the vertex attributes
 	sizeVertexPositions := len(vertexPositions) * int(unsafe.Sizeof(vertexPositions[0]))
 	sizeVertexColors := len(vertexColors) * int(unsafe.Sizeof(vertexColors[0]))
 
-	gl.GenVertexArrays(1, &VAOs[Triangles])
-	gl.BindVertexArray(VAOs[Triangles])
+	gl.GenVertexArrays(numVAOs, &s.VAOs[0])
+	gl.BindVertexArray(s.VAOs[trianglesName])
 
-	gl.GenBuffers(1, &Buffers[ArrayBuffer])
-	gl.BindBuffer(gl.ARRAY_BUFFER, Buffers[ArrayBuffer])
+	gl.BindBuffer(gl.ARRAY_BUFFER, s.Buffers[arrayBufferName])
 	gl.BufferData(gl.ARRAY_BUFFER, sizeVertexPositions+sizeVertexColors, nil, gl.STATIC_DRAW)
 	gl.BufferSubData(gl.ARRAY_BUFFER, 0, sizeVertexPositions, gl.Ptr(vertexPositions))
 	gl.BufferSubData(gl.ARRAY_BUFFER, sizeVertexPositions, sizeVertexColors, gl.Ptr(vertexColors))
@@ -117,7 +115,8 @@ func (s *scene) Setup() error {
 }
 
 func (s *scene) Update(dt float32) {
-
+	// This is where you would put code to update your scene.
+	// This scene does not change, so there is nothing here.
 }
 
 func (s *scene) Display() {
@@ -135,56 +134,63 @@ func (s *scene) Display() {
 
 	// Set up the model and projection matrix
 	projectionMatrix := mgl32.Frustum(-1, 1, -Aspect, Aspect, 1, 500)
-	gl.UniformMatrix4fv(renderProjectionMatrixLoc, 1, false, &projectionMatrix[0])
+	gl.UniformMatrix4fv(s.ProjectionMatrixLoc, 1, false, &projectionMatrix[0])
 
 	// Set up for a glDrawElements call
-	gl.BindVertexArray(VAOs[Triangles])
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, Buffers[ElementBuffer])
+	gl.BindVertexArray(s.VAOs[trianglesName])
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, s.Buffers[elementBufferName])
 
 	// Draw Arrays...
 	modelMatrix = mgl32.Translate3D(-3, 0, -5)
 	// TODO: figure out why the c++ version sends 4 instead of 1.
 	//       maybe it is due to its matrix being stored as 4 arrays...?
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
+	gl.UniformMatrix4fv(s.ModelMatrixLoc, 1, false, &modelMatrix[0])
 	gl.DrawArrays(gl.TRIANGLES, 0, 3)
 
 	// DrawElements
 	modelMatrix = mgl32.Translate3D(-1, 0, -5)
 	// TODO: figure out why the c++ version sends 4 instead of 1.
 	//       maybe it is due to its matrix being stored as 4 arrays...?
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
+	gl.UniformMatrix4fv(s.ModelMatrixLoc, 1, false, &modelMatrix[0])
 	gl.DrawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil)
 
 	// DrawElementsBaseVertex
 	modelMatrix = mgl32.Translate3D(1, 0, -5)
 	// TODO: figure out why the c++ version sends 4 instead of 1.
 	//       maybe it is due to its matrix being stored as 4 arrays...?
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
+	gl.UniformMatrix4fv(s.ModelMatrixLoc, 1, false, &modelMatrix[0])
 	gl.DrawElementsBaseVertex(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, nil, 1)
 
 	// DrawArraysInstanced
 	modelMatrix = mgl32.Translate3D(3, 0, -5)
 	// TODO: figure out why the c++ version sends 4 instead of 1.
 	//       maybe it is due to its matrix being stored as 4 arrays...?
-	gl.UniformMatrix4fv(renderModelMatrixLoc, 1, false, &modelMatrix[0])
+	gl.UniformMatrix4fv(s.ModelMatrixLoc, 1, false, &modelMatrix[0])
 	gl.DrawArraysInstanced(gl.TRIANGLES, 0, 3, 1)
 
 	gl.Flush()
 }
 
 func (s *scene) Cleanup() {
+	var id uint32
+	for i := 0; i < numPrograms; i++ {
+		id = s.Programs[i]
+		gl.UseProgram(id)
+		gl.DeleteProgram(id)
+	}
 }
 
 // Main methods
 func init() {
 	runtime.LockOSThread()
-	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/03/ch03_drawcommands"); err != nil {
+	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/03/drawcommands"); err != nil {
 		panic(err)
 	}
 }
 
 func main() {
 	c := app.Config{
+		Name:                "Ch3-DrawCommands",
 		DefaultScreenWidth:  512,
 		DefaultScreenHeight: 512,
 		EscapeToQuit:        true,
