@@ -17,12 +17,12 @@ const ( // Program IDs
 	numPrograms       = iota
 )
 
-const ( // VAO IDs
+const ( // VAO Names
 	trianglesName = iota
 	numVAOs       = iota
 )
 
-const ( // Buffer IDs
+const ( // Buffer Names
 	arrayBufferName   = iota
 	elementBufferName = iota
 	numBuffers        = iota
