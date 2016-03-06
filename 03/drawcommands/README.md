@@ -8,26 +8,26 @@ Notes
 
 #### Draw Commands
 
-* ```DrawArrays(mode uint32, first int32, count int32)```
+* ```gl.DrawArrays(mode uint32, first int32, count int32)```
 [details](https://www.opengl.org/sdk/docs/man/html/glDrawArrays.xhtml)
-* ```DrawElements(mode uint32, count int32, xtype uint32, indices unsafe.Pointer)```
+* ```gl.DrawElements(mode uint32, count int32, xtype uint32, indices unsafe.Pointer)```
 [details](https://www.opengl.org/sdk/docs/man/html/glDrawElements.xhtml)
-* ```DrawElementsBaseVertex(mode uint32, count int32, xtype uint32, indices unsafe.Pointer, basevertex int32)```
+* ```gl.DrawElementsBaseVertex(mode uint32, count int32, xtype uint32, indices unsafe.Pointer, basevertex int32)```
 [details](https://www.opengl.org/sdk/docs/man/html/glDrawElementsBaseVertex.xhtml)
-* ```DrawArraysInstanced(mode uint32, first int32, count int32, instancecount int32)```
+* ```gl.DrawArraysInstanced(mode uint32, first int32, count int32, instancecount int32)```
 [details](https://www.opengl.org/sdk/docs/man/html/glDrawArraysInstanced.xhtml)
 
 #### Other OpenGL funcs of interest
 
-* ```BufferSubData(target uint32, offset int, size int, data unsafe.Pointer)```
+* ```gl.BufferSubData(target uint32, offset int, size int, data unsafe.Pointer)```
 [details](https://www.opengl.org/sdk/docs/man/html/glBufferSubData.xhtml)
-* ```Disable(cap uint32)```
+* ```gl.Disable(cap uint32)```
 [details](https://www.opengl.org/sdk/docs/man/docbook4/xhtml/glEnable.xml)
-* ```Enable(cap uint32)```
+* ```gl.Enable(cap uint32)```
 [details](https://www.opengl.org/sdk/docs/man/html/glEnable.xhtml)
-* ```GetUniformLocation(program uint32, name *uint8) int32```
+* ```gl.GetUniformLocation(program uint32, name *uint8) int32```
 [details](https://www.opengl.org/sdk/docs/man/docbook4/xhtml/glGetUniformLocation.xml)
-* ```UniformMatrix4fv(location int32, count int32, transpose bool, value *float32)```
+* ```gl.UniformMatrix4fv(location int32, count int32, transpose bool, value *float32)```
 [details](https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml)
 
 Screenshot

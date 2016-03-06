@@ -14,6 +14,13 @@ reflect the current rendering mode.  Green represents primitive restart mode,
 while blue represents the alternate rendering method requiring two separate draw
 commands.
 
+#### OpenGL funcs of interest
+
+* gl.DrawElements(mode uint32, count int32, xtype uint32, indices unsafe.Pointer)
+[details](https://www.opengl.org/sdk/docs/man/html/glDrawElements.xhtml)
+* gl.PrimitiveRestartIndex(index uint32)
+[details](https://www.opengl.org/sdk/docs/man/html/glPrimitiveRestartIndex.xhtml)
+
 Screenshot
 ----------
 
