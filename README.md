@@ -31,7 +31,12 @@ First see "Installing Examples" if you have not done so already.
 
 ```
 $ cd $GOPATH/src/github.com/hurricanerix/gorb
-$ go run 01/ch01_triangles/main.go
+$ make
+mkdir -p bin
+go build -o bin/ch01-triangles 01/triangles/main.go
+go build -o bin/ch03-drawcommands 03/drawcommands/main.go
+...
+$ ./ch01-triagnles
 ...
 ```
 
