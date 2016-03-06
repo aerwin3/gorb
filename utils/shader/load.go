@@ -38,8 +38,9 @@ func load(shaders *[]Info, separable bool) (uint32, error) {
 	cleanup(shaders)
 	var linked int32
 	if gl.GetProgramiv(program, gl.LINK_STATUS, &linked); linked == gl.FALSE {
+		msg := getErrorMsg(false, program)
 		gl.DeleteProgram(program)
-		return 0, fmt.Errorf("failed to link program: %s", getErrorMsg(false, program))
+		return 0, fmt.Errorf("failed to link program: %s", msg)
 	}
 
 	return program, nil
