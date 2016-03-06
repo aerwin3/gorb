@@ -1,10 +1,11 @@
-#version 330
+// Modified from OpenGL Programming Guide (Eighth Edition)
+#version 410
 
-in vec4 vs_fs_color;
+in vec4 vsColor;
 
-layout (location = 0) out vec4 color;
+layout (location = 0) out vec4 fragColor;
 
 void main(void)
 {
-    color = vs_fs_color;
+    fragColor = vsColor;
 }

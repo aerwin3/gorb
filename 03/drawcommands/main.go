@@ -29,8 +29,8 @@ const ( // Buffer Names
 )
 
 const ( // Attrib Locations
-	position = 0 // TODO: rename to mcVertexLoc
-	color    = 1 // TODO: rename to mcColorLoc
+	mcVertex = 0 // TODO: rename to mcVertexLoc
+	mcColor  = 1 // TODO: rename to mcColorLoc
 )
 
 var (
@@ -49,8 +49,8 @@ type scene struct {
 
 func (s *scene) Setup() error {
 	shaders := []shader.Info{
-		shader.Info{Type: gl.VERTEX_SHADER, Filename: "../ch03_primitive_restart/primitive_restart.vert"},
-		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "../ch03_primitive_restart/primitive_restart.frag"},
+		shader.Info{Type: gl.VERTEX_SHADER, Filename: "../primitive_restart/primitive_restart.vert"},
+		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "../primitive_restart/primitive_restart.frag"},
 	}
 
 	program, err := shader.Load(&shaders)
@@ -61,8 +61,8 @@ func (s *scene) Setup() error {
 
 	gl.UseProgram(s.Programs[primRestartProgID])
 
-	s.ModelMatrixLoc = gl.GetUniformLocation(s.Programs[primRestartProgID], gl.Str("model_matrix\x00"))
-	s.ProjectionMatrixLoc = gl.GetUniformLocation(s.Programs[primRestartProgID], gl.Str("projection_matrix\x00"))
+	s.ModelMatrixLoc = gl.GetUniformLocation(s.Programs[primRestartProgID], gl.Str("modelMatrix\x00"))
+	s.ProjectionMatrixLoc = gl.GetUniformLocation(s.Programs[primRestartProgID], gl.Str("projectionMatrix\x00"))
 
 	// A single triangle
 	vertexPositions := []float32{

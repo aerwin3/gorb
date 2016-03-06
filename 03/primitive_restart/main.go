@@ -29,8 +29,8 @@ const ( // Buffer IDs
 )
 
 const ( // Attrib Locations
-	position = 0 // TODO: rename to mcVertexLoc
-	color    = 1 // TODO: rename to mcColorLoc
+	mcVertexLoc = 0 // TODO: rename to mcVertexLoc
+	mcColor     = 1 // TODO: rename to mcColorLoc
 )
 
 var (
@@ -68,8 +68,8 @@ func (s *scene) Setup() error {
 
 	gl.UseProgram(s.Programs[primRestartProgID])
 
-	s.ModelMatrixLoc = gl.GetUniformLocation(s.Programs[primRestartProgID], gl.Str("model_matrix\x00"))
-	s.ProjectionMatrixLoc = gl.GetUniformLocation(s.Programs[primRestartProgID], gl.Str("projection_matrix\x00"))
+	s.ModelMatrixLoc = gl.GetUniformLocation(s.Programs[primRestartProgID], gl.Str("modelMatrix\x00"))
+	s.ProjectionMatrixLoc = gl.GetUniformLocation(s.Programs[primRestartProgID], gl.Str("projectionMatrix\x00"))
 
 	// 8 corners of a cube, side length 2, centered on the origin
 	vertexPositions := []float32{
