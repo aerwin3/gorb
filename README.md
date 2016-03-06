@@ -19,7 +19,7 @@ a more consistent flow from one example to the next.  This involves some of the 
 of the example.
 
 #### Chapter 1: Introduction to OpenGL
-  * [Triangles](./01/ch01_triangles/README.md)
+  * [Triangles](./01/triangles/README.md)
 
 #### Chapter 3: Drawing with OpenGL
   * [Draw Commands](./03/ch03_drawcommands/README.md)

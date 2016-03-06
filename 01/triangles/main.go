@@ -100,13 +100,14 @@ func (s *scene) Cleanup() {
 
 // Main methods
 func init() {
-	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/01/ch01_triangles"); err != nil {
+	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/01/triangles"); err != nil {
 		panic(err)
 	}
 }
 
 func main() {
 	c := app.Config{
+		Name:                "Ch1-Triangles",
 		DefaultScreenWidth:  512,
 		DefaultScreenHeight: 512,
 		EscapeToQuit:        true,
