@@ -25,6 +25,9 @@ of the example.
   * [Draw Commands](./03/drawcommands/README.md)
   * [Primitive Restart](./03/primitive_restart/README.md)
 
+#### Chapter 4: Color, Pixels, and Framebuffers
+  * [Gouraud](./04/gouraud/README.md)
+
 # Running Examples
 
 First see "Installing Examples" if you have not done so already.
