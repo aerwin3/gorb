@@ -45,7 +45,7 @@ type scene struct {
 
 type vertexData struct {
 	Pos   [2]float32
-	Color [4]uint16
+	Color [4]uint8
 }
 
 func (s *scene) Setup() error {
@@ -63,12 +63,12 @@ func (s *scene) Setup() error {
 	gl.UseProgram(s.Programs[trianglesProgID])
 
 	vertices := []vertexData{
-		vertexData{Pos: [2]float32{-0.90, -0.90}, Color: [4]uint16{255, 0, 0, 255}}, // Triangle 1
-		vertexData{Pos: [2]float32{0.85, -0.90}, Color: [4]uint16{0, 255, 0, 255}},
-		vertexData{Pos: [2]float32{-0.90, 0.85}, Color: [4]uint16{0, 0, 255, 255}},
-		vertexData{Pos: [2]float32{0.90, -0.85}, Color: [4]uint16{10, 10, 10, 255}}, // Triangle 2
-		vertexData{Pos: [2]float32{0.90, 0.90}, Color: [4]uint16{100, 100, 100, 255}},
-		vertexData{Pos: [2]float32{-0.85, 0.90}, Color: [4]uint16{255, 255, 255, 255}},
+		vertexData{Pos: [2]float32{-0.90, -0.90}, Color: [4]uint8{255, 0, 0, 255}}, // Triangle 1
+		vertexData{Pos: [2]float32{0.85, -0.90}, Color: [4]uint8{0, 255, 0, 255}},
+		vertexData{Pos: [2]float32{-0.90, 0.85}, Color: [4]uint8{0, 0, 255, 255}},
+		vertexData{Pos: [2]float32{0.90, -0.85}, Color: [4]uint8{10, 10, 10, 255}}, // Triangle 2
+		vertexData{Pos: [2]float32{0.90, 0.90}, Color: [4]uint8{100, 100, 100, 255}},
+		vertexData{Pos: [2]float32{-0.85, 0.90}, Color: [4]uint8{255, 255, 255, 255}},
 	}
 	s.NumVertices[trianglesName] = int32(len(vertices))
 
