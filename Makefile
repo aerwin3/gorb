@@ -1,26 +1,18 @@
 CC=go build
-EXECUTABLES=bin/ch01-triangles bin/ch03-drawcommands bin/ch03-primitive_restart bin/ch04-gouraud
+EXES = $(shell find . -path ./utils -prune -o -name 'main.go' -print | sed 's/^\.\//ch/g' | sed 's/\/main.go$$//g' | sed 's/\//-/g' | sed 's/^/bin\//g')
+DEPS=$(shell find ./utils -path '*doc.go' -prune -o -name '*.go' -print)
 
-default: $(EXECUTABLES)
+default : $(EXES)
 
-bin/ch01-triangles: mkbin 01/triangles/main.go
-	$(CC) -o $@ 01/triangles/main.go
+# TODO: "{ch}/{example}/main.go" should be included as a dependencie
+#       but for some reason the following does not work
+#$(EXES) : /bin $(shell echo "$(subst -,/,$(subst bin/ch,,$@))" | sed 's/$$/\/main.go/g') $(DEPS)
+$(EXES) : /bin $(DEPS)
+	$(CC) -o $@ $(shell echo "$(subst -,/,$(subst bin/ch,,$@))" | sed 's/$$/\/main.go/g')
 
-bin/ch03-drawcommands: mkbin 03/drawcommands/main.go 
-	$(CC) -o $@ 03/drawcommands/main.go
-
-bin/ch03-primitive_restart: mkbin 03/primitive_restart/main.go 
-	$(CC) -o $@ 03/primitive_restart/main.go
-
-bin/ch04-gouraud: mkbin 04/gouraud/main.go 
-	$(CC) -o $@ 04/gouraud/main.go
+/bin:
+	mkdir -p bin
 
 .PHONY: clean
 clean:
-	rm -f bin/*
-
-.PHONY: mkbin
-mkbin:
-	mkdir -p bin
-
-
+	rm -f $(EXES)
