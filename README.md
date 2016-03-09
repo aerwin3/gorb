@@ -23,7 +23,7 @@ of the example.
 
 #### Chapter 3: Drawing with OpenGL
   * [Draw Commands](./03/drawcommands/README.md)
-  * [Primitive Restart](./03/primitive_restart/README.md)
+  * [Primitive Restart](./03/primitive-restart/README.md)
 
 #### Chapter 4: Color, Pixels, and Framebuffers
   * [Gouraud](./04/gouraud/README.md)
