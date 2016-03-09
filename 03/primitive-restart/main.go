@@ -186,7 +186,7 @@ func (s *scene) Cleanup() {
 
 // Main methods
 func init() {
-	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/03/primitive_restart"); err != nil {
+	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/03/primitive-restart"); err != nil {
 		panic(err)
 	}
 }
