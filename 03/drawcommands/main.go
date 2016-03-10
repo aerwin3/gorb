@@ -49,8 +49,8 @@ type scene struct {
 
 func (s *scene) Setup() error {
 	shaders := []shader.Info{
-		shader.Info{Type: gl.VERTEX_SHADER, Filename: "../primitive_restart/primitive_restart.vert"},
-		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "../primitive_restart/primitive_restart.frag"},
+		shader.Info{Type: gl.VERTEX_SHADER, Filename: "../primitive-restart/primitive_restart.vert"},
+		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "../primitive-restart/primitive_restart.frag"},
 	}
 
 	program, err := shader.Load(&shaders)
