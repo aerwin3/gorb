@@ -7,10 +7,48 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/hurricanerix/gorb/utils"
-	"github.com/hurricanerix/gorb/utils/app"
-	"github.com/hurricanerix/gorb/utils/shader"
+	"github.com/hurricanerix/go-gl-utils/app"
+	"github.com/hurricanerix/go-gl-utils/path"
+	"github.com/hurricanerix/go-gl-utils/shader"
 )
+
+func init() {
+	if err := path.SetWorkingDir("github.com/hurricanerix/gorb/03/primitive-restart"); err != nil {
+		panic(err)
+	}
+}
+
+func KeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+	if action == glfw.Release && key == glfw.KeySpace {
+		UsePrimitiveRestart = !UsePrimitiveRestart
+	}
+}
+
+func main() {
+	c := app.Config{
+		Name:                "Ch3-PrimitiveRestart",
+		DefaultScreenWidth:  512,
+		DefaultScreenHeight: 512,
+		EscapeToQuit:        true,
+		SupportedGLVers: []mgl32.Vec2{
+			mgl32.Vec2{4, 3},
+			mgl32.Vec2{4, 1},
+		},
+		KeyCallback: KeyCallback,
+	}
+	// TODO: Get the w/h to calculate the correct aspect ratio
+	Aspect = float32(512) / float32(512)
+
+	s := &scene{}
+
+	a := app.New(c, s)
+
+	if err := a.Run(); err != nil {
+		panic(err)
+	}
+}
+
+// Everything below this line is for the Scene implementation.
 
 const ( // Program IDs
 	primRestartProgID = iota
@@ -182,41 +220,4 @@ func (s *scene) Display() {
 }
 
 func (s *scene) Cleanup() {
-}
-
-// Main methods
-func init() {
-	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/03/primitive-restart"); err != nil {
-		panic(err)
-	}
-}
-
-func KeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-	if action == glfw.Release && key == glfw.KeySpace {
-		UsePrimitiveRestart = !UsePrimitiveRestart
-	}
-}
-
-func main() {
-	c := app.Config{
-		Name:                "Ch3-PrimitiveRestart",
-		DefaultScreenWidth:  512,
-		DefaultScreenHeight: 512,
-		EscapeToQuit:        true,
-		SupportedGLVers: []mgl32.Vec2{
-			mgl32.Vec2{4, 3},
-			mgl32.Vec2{4, 1},
-		},
-		KeyCallback: KeyCallback,
-	}
-	// TODO: Get the w/h to calculate the correct aspect ratio
-	Aspect = float32(512) / float32(512)
-
-	s := &scene{}
-
-	a := app.New(c, s)
-
-	if err := a.Run(); err != nil {
-		panic(err)
-	}
 }

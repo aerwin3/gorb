@@ -7,10 +7,42 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/hurricanerix/gorb/utils"
-	"github.com/hurricanerix/gorb/utils/app"
-	"github.com/hurricanerix/gorb/utils/shader"
+	"github.com/hurricanerix/go-gl-utils/app"
+	"github.com/hurricanerix/go-gl-utils/path"
+	"github.com/hurricanerix/go-gl-utils/shader"
 )
+
+func init() {
+	runtime.LockOSThread()
+	if err := path.SetWorkingDir("github.com/hurricanerix/gorb/03/drawcommands"); err != nil {
+		panic(err)
+	}
+}
+
+func main() {
+	c := app.Config{
+		Name:                "Ch3-DrawCommands",
+		DefaultScreenWidth:  512,
+		DefaultScreenHeight: 512,
+		EscapeToQuit:        true,
+		SupportedGLVers: []mgl32.Vec2{
+			mgl32.Vec2{4, 3},
+			mgl32.Vec2{4, 1},
+		},
+	}
+	// TODO: Get the w/h to calculate the correct aspect ratio
+	Aspect = float32(512) / float32(512)
+
+	s := &scene{}
+
+	a := app.New(c, s)
+
+	if err := a.Run(); err != nil {
+		panic(err)
+	}
+}
+
+// Everything below this line is for the Scene implementation.
 
 const ( // Program IDs
 	primRestartProgID = iota
@@ -177,36 +209,5 @@ func (s *scene) Cleanup() {
 		id = s.Programs[i]
 		gl.UseProgram(id)
 		gl.DeleteProgram(id)
-	}
-}
-
-// Main methods
-func init() {
-	runtime.LockOSThread()
-	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/03/drawcommands"); err != nil {
-		panic(err)
-	}
-}
-
-func main() {
-	c := app.Config{
-		Name:                "Ch3-DrawCommands",
-		DefaultScreenWidth:  512,
-		DefaultScreenHeight: 512,
-		EscapeToQuit:        true,
-		SupportedGLVers: []mgl32.Vec2{
-			mgl32.Vec2{4, 3},
-			mgl32.Vec2{4, 1},
-		},
-	}
-	// TODO: Get the w/h to calculate the correct aspect ratio
-	Aspect = float32(512) / float32(512)
-
-	s := &scene{}
-
-	a := app.New(c, s)
-
-	if err := a.Run(); err != nil {
-		panic(err)
 	}
 }

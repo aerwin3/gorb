@@ -7,10 +7,39 @@ import (
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/hurricanerix/gorb/utils"
-	"github.com/hurricanerix/gorb/utils/app"
-	"github.com/hurricanerix/gorb/utils/shader"
+	"github.com/hurricanerix/go-gl-utils/app"
+	"github.com/hurricanerix/go-gl-utils/path"
+	"github.com/hurricanerix/go-gl-utils/shader"
 )
+
+func init() {
+	if err := path.SetWorkingDir("github.com/hurricanerix/gorb/04/gouraud"); err != nil {
+		panic(err)
+	}
+}
+
+func main() {
+	c := app.Config{
+		Name:                "Ch4-Gouraud",
+		DefaultScreenWidth:  512,
+		DefaultScreenHeight: 512,
+		EscapeToQuit:        true,
+		SupportedGLVers: []mgl32.Vec2{
+			mgl32.Vec2{4, 3},
+			mgl32.Vec2{4, 1},
+		},
+		KeyCallback: KeyCallback,
+	}
+
+	s := &scene{}
+
+	a := app.New(c, s)
+	if err := a.Run(); err != nil {
+		panic(err)
+	}
+}
+
+// Everything below this line is for the Scene implementation.
 
 const ( // Program IDs
 	trianglesProgID = iota
@@ -125,33 +154,5 @@ func KeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action,
 			mode = gl.FILL
 		}
 		gl.PolygonMode(gl.FRONT_AND_BACK, mode)
-	}
-}
-
-// Main methods
-func init() {
-	if err := utils.SetWorkingDir("github.com/hurricanerix/gorb/04/gouraud"); err != nil {
-		panic(err)
-	}
-}
-
-func main() {
-	c := app.Config{
-		Name:                "Ch4-Gouraud",
-		DefaultScreenWidth:  512,
-		DefaultScreenHeight: 512,
-		EscapeToQuit:        true,
-		SupportedGLVers: []mgl32.Vec2{
-			mgl32.Vec2{4, 3},
-			mgl32.Vec2{4, 1},
-		},
-		KeyCallback: KeyCallback,
-	}
-
-	s := &scene{}
-
-	a := app.New(c, s)
-	if err := a.Run(); err != nil {
-		panic(err)
 	}
 }
