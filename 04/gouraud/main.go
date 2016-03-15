@@ -77,7 +77,7 @@ type vertexData struct {
 	Color [4]uint8
 }
 
-func (s *scene) Setup() error {
+func (s *scene) Setup(ctx *app.Context) error {
 	shaders := []shader.Info{
 		shader.Info{Type: gl.VERTEX_SHADER, Filename: "gouraud.vert"},
 		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "gouraud.frag"},

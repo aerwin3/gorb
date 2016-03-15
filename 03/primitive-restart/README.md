@@ -8,7 +8,7 @@ Notes
 
 * The original example had a macro defining "USE_PRIMITIVE_RESTART" that allowed
 the draw mode to be set at compile time.  This has been modified to allow the
-user to switch it at run time by pressing the space bar.  Since there is no visual
+user to switch it at run time by pressing the 'M' key.  Since there is no visual
 difference between the two modes, the background color has been changed to
 reflect the current rendering mode.  Green represents primitive restart mode,
 while blue represents the alternate rendering method requiring two separate draw

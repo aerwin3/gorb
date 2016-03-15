@@ -19,7 +19,7 @@ func init() {
 }
 
 func KeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
-	if action == glfw.Release && key == glfw.KeySpace {
+	if action == glfw.Release && key == glfw.KeyM {
 		UsePrimitiveRestart = !UsePrimitiveRestart
 	}
 }
@@ -92,7 +92,7 @@ type scene struct {
 	Rotation         float32
 }
 
-func (s *scene) Setup() error {
+func (s *scene) Setup(ctx *app.Context) error {
 	shaders := []shader.Info{
 		shader.Info{Type: gl.VERTEX_SHADER, Filename: "primitive_restart.vert"},
 		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "primitive_restart.frag"},

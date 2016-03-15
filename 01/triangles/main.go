@@ -65,7 +65,7 @@ type scene struct {
 	Buffers     [numBuffers]uint32
 }
 
-func (s *scene) Setup() error {
+func (s *scene) Setup(ctx *app.Context) error {
 	shaders := []shader.Info{
 		shader.Info{Type: gl.VERTEX_SHADER, Filename: "triangles.vert"},
 		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "triangles.frag"},
