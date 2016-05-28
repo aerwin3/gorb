@@ -5,39 +5,17 @@ import (
 	"unsafe"
 
 	"github.com/go-gl/gl/v4.1-core/gl"
-	"github.com/go-gl/mathgl/mgl32"
-	"github.com/hurricanerix/go-gl-utils/app"
-	"github.com/hurricanerix/go-gl-utils/path"
-	"github.com/hurricanerix/go-gl-utils/shader"
+	"github.com/go-gl/glfw/v3.1/glfw"
+
+	"github.com/hurricanerix/gorb/util"
 )
 
 func init() {
-	if err := path.SetWorkingDir("github.com/hurricanerix/gorb/01/triangles"); err != nil {
+	// This example should always look here for it's resources.
+	if err := util.SetWorkingDir("github.com/hurricanerix/gorb/01/triangles"); err != nil {
 		panic(err)
 	}
 }
-
-func main() {
-	c := app.Config{
-		Name:                "Ch1-Triangles",
-		DefaultScreenWidth:  512,
-		DefaultScreenHeight: 512,
-		EscapeToQuit:        true,
-		SupportedGLVers: []mgl32.Vec2{
-			mgl32.Vec2{4, 3},
-			mgl32.Vec2{4, 1},
-		},
-	}
-
-	s := &scene{}
-
-	a := app.New(c, s)
-	if err := a.Run(); err != nil {
-		panic(err)
-	}
-}
-
-// Everything below this line is for the Scene implementation.
 
 const ( // Program IDs
 	trianglesProgID = iota
@@ -58,27 +36,34 @@ const ( // Attrib Locations
 	mcVertexLoc = 0
 )
 
-type scene struct {
-	Programs    [numPrograms]uint32
-	VAOs        [numVAOs]uint32
-	NumVertices [numVAOs]int32
-	Buffers     [numBuffers]uint32
-}
+var (
+	programs    [numPrograms]uint32
+	vaos        [numVAOs]uint32
+	numVertices [numVAOs]int32
+	buffers     [numBuffers]uint32
+)
 
-func (s *scene) Setup(ctx *app.Context) error {
-	shaders := []shader.Info{
-		shader.Info{Type: gl.VERTEX_SHADER, Filename: "triangles.vert"},
-		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "triangles.frag"},
-	}
+func main() {
+	var err error
 
-	program, err := shader.Load(&shaders)
+	// Get window context
+	window, err := util.NewWindow("Ch1-Triangles", 512, 512)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	s.Programs[trianglesProgID] = program
 
-	gl.UseProgram(s.Programs[trianglesProgID])
+	// Load the GLSL program
+	shaders := []util.ShaderInfo{
+		util.ShaderInfo{Type: gl.VERTEX_SHADER, Filename: "triangles.vert"},
+		util.ShaderInfo{Type: gl.FRAGMENT_SHADER, Filename: "triangles.frag"},
+	}
+	programs[trianglesProgID], err = util.Load(&shaders)
+	if err != nil {
+		panic(err)
+	}
+	gl.UseProgram(programs[trianglesProgID])
 
+	// Setup model to be rendered
 	vertices := []float32{
 		-0.90, -0.90, // Triangle 1
 		0.85, -0.90,
@@ -87,39 +72,37 @@ func (s *scene) Setup(ctx *app.Context) error {
 		0.90, 0.90,
 		-0.85, 0.90,
 	}
-	s.NumVertices[trianglesName] = int32(len(vertices))
+	numVertices[trianglesName] = int32(len(vertices))
 
-	gl.GenVertexArrays(numVAOs, &s.VAOs[0])
-	gl.BindVertexArray(s.VAOs[trianglesName])
+	gl.GenVertexArrays(numVAOs, &vaos[0])
+	gl.BindVertexArray(vaos[trianglesName])
 
 	sizeVertices := len(vertices) * int(unsafe.Sizeof(vertices[0]))
-	gl.GenBuffers(numBuffers, &s.Buffers[0])
-	gl.BindBuffer(gl.ARRAY_BUFFER, s.Buffers[arrayBufferName])
+	gl.GenBuffers(numBuffers, &buffers[0])
+	gl.BindBuffer(gl.ARRAY_BUFFER, buffers[arrayBufferName])
 	gl.BufferData(gl.ARRAY_BUFFER, sizeVertices, gl.Ptr(vertices), gl.STATIC_DRAW)
 
 	gl.VertexAttribPointer(mcVertexLoc, 2, gl.FLOAT, false, 0, gl.PtrOffset(0))
 	gl.EnableVertexAttribArray(mcVertexLoc)
 
-	return nil
-}
+	// Main loop
+	for !window.ShouldClose() {
+		// Clear buffer
+		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-func (s *scene) Update(dt float32) {
-	// This is where you would put code to update your scene.
-	// This scene does not change, so there is nothing here.
-}
+		// Render
+		gl.BindVertexArray(vaos[trianglesName])
+		gl.DrawArrays(gl.TRIANGLES, 0, numVertices[trianglesName])
 
-func (s *scene) Display() {
-	gl.Clear(gl.COLOR_BUFFER_BIT)
-
-	gl.BindVertexArray(s.VAOs[trianglesName])
-	gl.DrawArrays(gl.TRIANGLES, 0, s.NumVertices[trianglesName])
-}
-
-func (s *scene) Cleanup() {
-	var id uint32
-	for i := 0; i < numPrograms; i++ {
-		id = s.Programs[i]
-		gl.UseProgram(id)
-		gl.DeleteProgram(id)
+		// Swap Buffers
+		gl.Flush()
+		window.SwapBuffers()
+		glfw.PollEvents()
 	}
+
+	// Cleanup
+	for _, s := range shaders {
+		s.Delete()
+	}
+	util.Terminate()
 }
