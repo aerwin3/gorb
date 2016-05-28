@@ -6,40 +6,14 @@ import (
 
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.1/glfw"
-	"github.com/go-gl/mathgl/mgl32"
-	"github.com/hurricanerix/go-gl-utils/app"
-	"github.com/hurricanerix/go-gl-utils/path"
-	"github.com/hurricanerix/go-gl-utils/shader"
+	"github.com/hurricanerix/gorb/util"
 )
 
 func init() {
-	if err := path.SetWorkingDir("github.com/hurricanerix/gorb/04/gouraud"); err != nil {
+	if err := util.SetWorkingDir("github.com/hurricanerix/gorb/04/gouraud"); err != nil {
 		panic(err)
 	}
 }
-
-func main() {
-	c := app.Config{
-		Name:                "Ch4-Gouraud",
-		DefaultScreenWidth:  512,
-		DefaultScreenHeight: 512,
-		EscapeToQuit:        true,
-		SupportedGLVers: []mgl32.Vec2{
-			mgl32.Vec2{4, 3},
-			mgl32.Vec2{4, 1},
-		},
-		KeyCallback: KeyCallback,
-	}
-
-	s := &scene{}
-
-	a := app.New(c, s)
-	if err := a.Run(); err != nil {
-		panic(err)
-	}
-}
-
-// Everything below this line is for the Scene implementation.
 
 const ( // Program IDs
 	trianglesProgID = iota
@@ -61,36 +35,43 @@ const ( // Attrib Locations
 	mcColorLoc  = 1
 )
 
-var (
-	mode uint32
-)
-
-type scene struct {
-	Programs    [numPrograms]uint32
-	VAOs        [numVAOs]uint32
-	NumVertices [numVAOs]int32
-	Buffers     [numBuffers]uint32
-}
-
 type vertexData struct {
 	Pos   [2]float32
 	Color [4]uint8
 }
 
-func (s *scene) Setup(ctx *app.Context) error {
-	shaders := []shader.Info{
-		shader.Info{Type: gl.VERTEX_SHADER, Filename: "gouraud.vert"},
-		shader.Info{Type: gl.FRAGMENT_SHADER, Filename: "gouraud.frag"},
-	}
+var (
+	programs    [numPrograms]uint32
+	vaos        [numVAOs]uint32
+	numVertices [numVAOs]int32
+	buffers     [numBuffers]uint32
+)
 
-	program, err := shader.Load(&shaders)
+var (
+	mode uint32
+)
+
+func main() {
+	var err error
+
+	// Get window context
+	window, err := util.NewWindow("Ch4-Gouraud", 512, 512)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	s.Programs[trianglesProgID] = program
 
-	gl.UseProgram(s.Programs[trianglesProgID])
+	// Load the GLSL program
+	shaders := []util.ShaderInfo{
+		util.ShaderInfo{Type: gl.VERTEX_SHADER, Filename: "gouraud.vert"},
+		util.ShaderInfo{Type: gl.FRAGMENT_SHADER, Filename: "gouraud.frag"},
+	}
+	programs[trianglesProgID], err = util.Load(&shaders)
+	if err != nil {
+		panic(err)
+	}
+	gl.UseProgram(programs[trianglesProgID])
 
+	// Setup model to be rendered
 	vertices := []vertexData{
 		vertexData{Pos: [2]float32{-0.90, -0.90}, Color: [4]uint8{255, 0, 0, 255}}, // Triangle 1
 		vertexData{Pos: [2]float32{0.85, -0.90}, Color: [4]uint8{0, 255, 0, 255}},
@@ -99,16 +80,16 @@ func (s *scene) Setup(ctx *app.Context) error {
 		vertexData{Pos: [2]float32{0.90, 0.90}, Color: [4]uint8{100, 100, 100, 255}},
 		vertexData{Pos: [2]float32{-0.85, 0.90}, Color: [4]uint8{255, 255, 255, 255}},
 	}
-	s.NumVertices[trianglesName] = int32(len(vertices))
+	numVertices[trianglesName] = int32(len(vertices))
 
-	gl.GenVertexArrays(numVAOs, &s.VAOs[0])
-	gl.BindVertexArray(s.VAOs[trianglesName])
+	gl.GenVertexArrays(numVAOs, &vaos[0])
+	gl.BindVertexArray(vaos[trianglesName])
 
 	sizeVertexData := int(unsafe.Sizeof(vertices[0]))
 	sizePos := int(unsafe.Sizeof(vertices[0].Pos))
 	sizeVertices := len(vertices) * sizeVertexData
-	gl.GenBuffers(numBuffers, &s.Buffers[0])
-	gl.BindBuffer(gl.ARRAY_BUFFER, s.Buffers[arrayBufferName])
+	gl.GenBuffers(numBuffers, &buffers[0])
+	gl.BindBuffer(gl.ARRAY_BUFFER, buffers[arrayBufferName])
 	gl.BufferData(gl.ARRAY_BUFFER, sizeVertices, gl.Ptr(vertices), gl.STATIC_DRAW)
 
 	// TODO: Fix color of triangles, one should be red/green/blue, the other should be black/grey/white
@@ -120,33 +101,36 @@ func (s *scene) Setup(ctx *app.Context) error {
 
 	mode = gl.FILL
 
-	return nil
-}
+	// Main loop
+	for !window.ShouldClose() {
+		// Clear buffer
+		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-func (s *scene) Update(dt float32) {
-	// This is where you would put code to update your scene.
-	// This scene does not change, so there is nothing here.
-}
+		// Render
+		gl.BindVertexArray(vaos[trianglesName])
+		gl.DrawArrays(gl.TRIANGLES, 0, numVertices[trianglesName])
 
-func (s *scene) Display() {
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+		// Swap Buffers
+		gl.Flush()
+		window.SwapBuffers()
+		glfw.PollEvents()
+	}
 
-	gl.BindVertexArray(s.VAOs[trianglesName])
-	gl.DrawArrays(gl.TRIANGLES, 0, s.NumVertices[trianglesName])
-
-	gl.Flush()
-}
-
-func (s *scene) Cleanup() {
+	// Cleanup
+	for _, s := range shaders {
+		s.Delete()
+	}
 	var id uint32
 	for i := 0; i < numPrograms; i++ {
-		id = s.Programs[i]
+		id = programs[i]
 		gl.UseProgram(id)
 		gl.DeleteProgram(id)
 	}
+	util.Terminate()
 }
 
-func KeyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+// TODO: fix callback
+func keyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
 	if action == glfw.Release && key == glfw.KeyM {
 		if mode == gl.FILL {
 			mode = gl.LINE
